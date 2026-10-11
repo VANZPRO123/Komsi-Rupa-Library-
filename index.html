@@ -1,14 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f7f2">
-  <meta name="description" content="KOMSI RUPA LIBRARY — ruang arsip visual untuk karya, ide, dan eksplorasi kreatif.">
-  <title>KOMSI RUPA LIBRARY — Visual Archive</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="KOMSI RUPA LIBRARY — ruang arsip, referensi, dan eksplorasi visual.">
+  <title>KOMSI RUPA LIBRARY</title>
   <link rel="stylesheet" href="style.css?v=20261012-final">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -19,128 +16,144 @@
   <script defer src="app.js?v=20261012-final"></script>
 </head>
 <body>
-  <header class="topbar">
+  <header class="site-header">
     <a class="brand" href="#" aria-label="KOMSI RUPA LIBRARY beranda">
       <span class="brand-mark">K</span>
-      <span>KOMSI <b>RUPA LIBRARY</b></span>
+      <span class="brand-name">KOMSI RUPA LIBRARY</span>
     </a>
-    <nav class="nav" aria-label="Navigasi utama">
-      <a class="nav-link active" href="#library">Koleksi</a>
-      <button class="text-button" id="submitInfo" type="button">Tentang</button>
-      <button class="admin-button" id="adminOpen" type="button">Admin ↗</button>
+    <nav class="header-nav" aria-label="Navigasi utama">
+      <a href="#tentang">Tentang</a>
+      <button type="button" class="admin-link" id="adminOpen">Admin ↗</button>
     </nav>
   </header>
 
   <main>
-    <section class="hero">
-      <div class="hero-kicker"><span class="dot"></span> RUANG ARSIP VISUAL KOMSI</div>
-      <h1>Ideas deserve<br><span>a beautiful place.</span></h1>
-      <p class="hero-copy">Kumpulan karya, referensi, dan eksplorasi visual dalam satu ruang kreatif. Temukan inspirasi, simpan yang kamu suka, dan bagikan karya terbaikmu.</p>
-      <a class="primary-button" href="#library">Jelajahi koleksi <span aria-hidden="true">↘</span></a>
-      <div class="hero-note">
-        <span>CURATED VISUAL ARCHIVE</span>
-        <span>DESIGN · ART · PHOTOGRAPHY · MOTION</span>
+    <section class="hero" id="tentang">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="lime-dot"></span> RUANG ARSIP VISUAL KOMSI</p>
+        <h1 class="hero-title">
+          <span class="hero-line">Ruang Untuk</span>
+          <span class="hero-line hero-line-accent">Karya Visual<span class="hero-dot">.</span></span>
+          <span class="hero-index">ARSIP <i>•</i> IDE <i>•</i> EKSPRESI</span>
+        </h1>
+        <p class="hero-description">Kumpulan karya, referensi, dan eksplorasi visual dalam satu ruang kreatif. Temukan inspirasi, simpan yang kamu suka, dan bagikan karya terbaikmu.</p>
+        <a class="primary-cta" href="#koleksi">Jelajahi koleksi <span aria-hidden="true">↗</span></a>
       </div>
-      <div class="hero-orbit" aria-hidden="true"><span>K</span><i></i><b></b></div>
+      <div class="hero-watermark" aria-hidden="true">K</div>
+      <div class="hero-footer">
+        <div>
+          <span>ARSIP VISUAL PILIHAN</span>
+          <span>DESAIN · SENI · FOTOGRAFI · ANIMASI</span>
+        </div>
+        <span class="footer-monogram">K</span>
+      </div>
     </section>
 
-    <section class="library-section" id="library">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">THE COLLECTION / 001</p>
-          <h2>Ruang <span>karya.</span></h2>
-        </div>
-        <p class="result-count" id="resultCount">Memuat koleksi…</p>
+    <section class="collection" id="koleksi">
+      <div class="collection-heading">
+        <p class="section-kicker">KOLEKSI / 001</p>
+        <h2>Ruang karya.</h2>
+        <p class="collection-count" id="resultCount">Memuat koleksi...</p>
       </div>
 
-      <div class="toolbar">
-        <label class="searchbox"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Cari karya, kreator, kategori…" autocomplete="off"></label>
-        <select id="sortSelect" aria-label="Urutkan koleksi">
-          <option value="newest">Terbaru</option>
-          <option value="az">A–Z</option>
-        </select>
+      <div class="collection-tools">
+        <label class="search-box">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Cari karya, kreator, kategori..." autocomplete="off">
+        </label>
+        <label class="sort-box">
+          <span class="sr-only">Urutkan karya</span>
+          <select id="sortSelect">
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+            <option value="title">Nama A–Z</option>
+          </select>
+        </label>
       </div>
 
-      <div class="categories" id="categories" aria-label="Filter kategori">
-        <button class="category active" type="button" data-category="Semua">Semua karya</button>
-        <button class="category" type="button" data-category="Desain">Desain</button>
-        <button class="category" type="button" data-category="Ilustrasi">Ilustrasi</button>
-        <button class="category" type="button" data-category="Fotografi">Fotografi</button>
-        <button class="category" type="button" data-category="Artwork">Artwork</button>
-        <button class="category" type="button" data-category="Video">Video</button>
+      <div class="category-list" id="categories" aria-label="Filter kategori">
+        <button class="category-chip active" type="button" data-category="Semua karya">Semua karya</button>
+        <button class="category-chip" type="button" data-category="Desain">Desain</button>
+        <button class="category-chip" type="button" data-category="Ilustrasi">Ilustrasi</button>
+        <button class="category-chip" type="button" data-category="Fotografi">Fotografi</button>
+        <button class="category-chip" type="button" data-category="Artwork">Artwork</button>
+        <button class="category-chip" type="button" data-category="Video">Video</button>
       </div>
 
-      <p class="notice" id="notice" role="status" aria-live="polite">Memuat katalog…</p>
+      <div class="notice" id="notice" role="status">Menghubungkan ke katalog KOMSI RUPA LIBRARY...</div>
       <div class="art-grid" id="artGrid" aria-live="polite"></div>
       <div class="empty-state" id="emptyState" hidden>
-        <span aria-hidden="true">◌</span>
-        <h3>Belum ada karya di sini</h3>
+        <span class="empty-mark">K</span>
+        <h3>Belum ada karya ditemukan.</h3>
         <p>Coba kata kunci lain atau pilih kategori yang berbeda.</p>
       </div>
     </section>
-
-    <section class="submit-strip">
-      <div>
-        <p class="eyebrow">PUNYA KARYA?</p>
-        <h2>Let your work<br>find its place.</h2>
-      </div>
-      <p>Bagikan karya dan referensi visualmu untuk memperkaya arsip kreatif KOMSI.</p>
-      <button class="outline-button" id="submitInfoBottom" type="button">Bagikan karya ↗</button>
-    </section>
   </main>
 
-  <footer>
-    <a class="brand footer-brand" href="#"><span class="brand-mark">K</span><span>KOMSI <b>RUPA LIBRARY</b></span></a>
-    <span>Ruang kecil untuk ide-ide besar.</span>
-    <span>© <span id="year"></span> KOMSI</span>
+  <footer class="site-footer">
+    <span>KOMSI RUPA LIBRARY</span>
+    <span>RUANG UNTUK KARYA VISUAL</span>
   </footer>
 
+  <!-- Dialog admin: mempertahankan ID yang umum dipakai app.js -->
   <dialog class="dialog" id="adminDialog">
-    <button class="close-dialog" type="button" data-close="adminDialog" aria-label="Tutup">×</button>
-    <p class="eyebrow">AREA TERBATAS</p>
-    <h2>Admin access.</h2>
-    <p class="muted">Masuk untuk mengelola dan mengunggah koleksi KOMSI.</p>
-    <form class="admin-form" id="loginForm">
-      <label>Email admin<input id="adminEmail" type="email" autocomplete="username" placeholder="admin@email.com" required></label>
-      <label>Password<input id="adminPassword" type="password" autocomplete="current-password" placeholder="Masukkan password" required></label>
-      <p class="form-message" id="adminMessage" role="status" aria-live="polite" hidden></p>
-      <button class="primary-button full" type="submit">Masuk sebagai admin</button>
+    <div class="dialog-head">
+      <div><p class="section-kicker">AREA TERBATAS</p><h2>Masuk Admin</h2></div>
+      <button type="button" class="icon-button" data-close-dialog="adminDialog" aria-label="Tutup">×</button>
+    </div>
+    <p class="dialog-intro">Masuk untuk mengelola koleksi visual KOMSI.</p>
+    <form id="loginForm" class="form-stack">
+      <label for="adminEmail">Email</label>
+      <input id="adminEmail" name="email" type="email" autocomplete="username" placeholder="admin@email.com" required>
+      <label for="adminPassword">Kata sandi</label>
+      <input id="adminPassword" name="password" type="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required>
+      <p id="adminMessage" class="form-message" role="status"></p>
+      <button class="primary-cta dialog-submit" type="submit">Masuk <span aria-hidden="true">↗</span></button>
     </form>
-    <section class="upload-panel" id="uploadPanel" hidden>
-      <div class="admin-divider"></div>
-      <h3>Tambah karya baru</h3>
-      <form class="admin-form" id="uploadForm">
-        <label>Judul karya<input id="artTitle" type="text" maxlength="120" required placeholder="Nama karya"></label>
-        <label>Kategori<select id="artCategory" required><option value="Desain">Desain</option><option value="Ilustrasi">Ilustrasi</option><option value="Fotografi">Fotografi</option><option value="Artwork">Artwork</option><option value="Video">Video</option></select></label>
-        <label>Deskripsi<textarea id="artDescription" rows="3" maxlength="1000" placeholder="Ceritakan sedikit tentang karya ini"></textarea></label>
-        <label>File karya<input id="artFile" type="file" required accept="image/*,video/*,application/pdf"></label>
-        <label>Gambar preview (opsional)<input id="artPreview" type="file" accept="image/*"></label>
-        <p class="muted">Ukuran maksimal file 50 MB. Pastikan file sesuai aturan penyimpanan Supabase.</p>
-        <button class="primary-button full" type="submit">Unggah karya</button>
+    <section id="uploadPanel" class="upload-panel" hidden>
+      <div class="dialog-head"><h3>Unggah karya</h3><button type="button" id="logoutButton" class="text-button">Keluar</button></div>
+      <form id="uploadForm" class="form-stack">
+        <label for="artTitle">Judul karya</label>
+        <input id="artTitle" name="title" type="text" placeholder="Judul karya" required>
+        <label for="artCategory">Kategori</label>
+        <select id="artCategory" name="category" required>
+          <option value="Desain">Desain</option>
+          <option value="Ilustrasi">Ilustrasi</option>
+          <option value="Fotografi">Fotografi</option>
+          <option value="Artwork">Artwork</option>
+          <option value="Video">Video</option>
+        </select>
+        <label for="artDescription">Deskripsi</label>
+        <textarea id="artDescription" name="description" rows="3" placeholder="Ceritakan sedikit tentang karya ini"></textarea>
+        <label for="artFile">Pilih berkas</label>
+        <input id="artFile" name="file" type="file" accept="image/*,video/*" required>
+        <div id="artPreview" class="art-preview"></div>
+        <button class="primary-cta dialog-submit" type="submit">Unggah karya <span aria-hidden="true">↗</span></button>
       </form>
-      <button class="outline-button logout-button" id="logoutButton" type="button">Keluar dari admin</button>
     </section>
   </dialog>
 
   <dialog class="dialog detail-dialog" id="detailDialog">
-    <button class="close-dialog" type="button" data-close="detailDialog" aria-label="Tutup">×</button>
+    <button type="button" class="icon-button detail-close" data-close-dialog="detailDialog" aria-label="Tutup">×</button>
     <div id="detailContent"></div>
   </dialog>
 
-  <dialog class="dialog info-dialog" id="infoDialog">
-    <button class="close-dialog" type="button" data-close="infoDialog" aria-label="Tutup">×</button>
-    <p class="eyebrow">ABOUT THE ARCHIVE</p>
-    <h2>Ruang untuk rupa.</h2>
-    <p>KOMSI RUPA LIBRARY adalah ruang arsip untuk menyimpan, menemukan, dan berbagi karya serta referensi visual. Dibangun untuk mendukung proses kreatif, eksplorasi, dan kolaborasi.</p>
-    <button class="primary-button" type="button" data-close="infoDialog">Mengerti</button>
+  <dialog class="dialog" id="infoDialog">
+    <div class="dialog-head"><h2>Informasi</h2><button type="button" class="icon-button" data-close-dialog="infoDialog" aria-label="Tutup">×</button></div>
+    <p id="infoMessage">Terima kasih sudah mengunjungi KOMSI RUPA LIBRARY.</p>
+    <button type="button" class="primary-cta dialog-submit" data-close-dialog="infoDialog">Mengerti</button>
   </dialog>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      var infoBottom = document.getElementById("submitInfoBottom");
-      if (infoBottom) infoBottom.addEventListener("click", function () {
-        var dialog = document.getElementById("infoDialog");
-        if (dialog && !dialog.open) dialog.showModal();
+    document.querySelectorAll('[data-close-dialog]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var dialog = document.getElementById(button.getAttribute('data-close-dialog'));
+        if (dialog && typeof dialog.close === 'function') dialog.close();
+      });
+    });
+    document.querySelectorAll('dialog').forEach(function (dialog) {
+      dialog.addEventListener('click', function (event) {
+        if (event.target === dialog) dialog.close();
       });
     });
   </script>
