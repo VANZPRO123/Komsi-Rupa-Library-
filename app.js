@@ -22,7 +22,9 @@ const supabase = hasSupabaseConfig && window.supabase ? window.supabase.createCl
 let artworks = [];
 let activeCategory = "Semua";
 let favoritesOnly = false;
-let favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
+let favorites = new Set();
+try { favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]")); }
+catch (e) { localStorage.removeItem("komsi-rupa-favorites"); }
 let currentUser = null;
 
 const $ = (selector) => document.querySelector(selector);
@@ -81,7 +83,7 @@ async function uploadArtwork(e){
     const {data:publicData}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
     let previewUrl=publicData.publicUrl;
     if(previewFile){const ppath=`${currentUser.id}/preview-${Date.now()}-${previewFile.name.replace(/[^a-zA-Z0-9._-]/g,"-")}`;const {error:pe}=await supabase.storage.from(STORAGE_BUCKET).upload(ppath,previewFile,{upsert:false,contentType:previewFile.type});if(pe)throw pe;previewUrl=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(ppath).data.publicUrl;}
-    const record={title:$("#artTitle").value.trim(),category:$("#artCategory").value,description:$("#artDescription").value.trim(),creator:$("#artCreator").value.trim()||"KOMSI Library",image_url:previewUrl,file_url:publicData.publicUrl,preview_url:previewUrl,file_name:file.name,file_size:file.size,mime_type:file.type,uploaded_by:currentUser.id};
+    const record={title:$("#artTitle").value.trim(),category:$("#artCategory").value,description:$("#artDescription").value.trim(),creator:$("#artCreator").value.trim()||"KOMSI Library",file_url:publicData.publicUrl,preview_url:previewUrl,file_name:file.name,file_size:file.size,mime_type:file.type,uploaded_by:currentUser.id};
     const {error:insertError}=await supabase.from(TABLE).insert(record);if(insertError)throw insertError;
     showMessage("Karya berhasil diunggah ke library.",true);$("#uploadForm").reset();await loadArtworks();
   }catch(err){console.error(err);showMessage("Gagal mengunggah: "+(err.message||"periksa konfigurasi Supabase dan kebijakan akses."));}
