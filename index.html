@@ -6,13 +6,12 @@
   <meta name="theme-color" content="#ffffff">
   <title>KOMSI RUPA LIBRARY</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- Muat Supabase JS dari CDN utama. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    if (!window.supabase) {
-      document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\\/script>');
-    }
-  </script>
-  <script defer src="app.js?v=20261011-supabase2"></script>
+
+  <!-- app.js menggunakan window.supabase; versi dinaikkan untuk melewati cache lama. -->
+  <script defer src="app.js?v=20261011-supabase3"></script>
 </head>
 <body>
   <header class="topbar">
@@ -55,7 +54,7 @@
         <button class="category" data-category="Video">Video</button>
         <button class="category" data-category="Artwork">Artwork</button>
       </div>
-      <div id="notice" class="notice" role="status">Mode pratinjau aktif. Hubungkan Supabase untuk memakai database dan upload sungguhan.</div>
+      <div id="notice" class="notice" role="status">Memuat koneksi katalog KOMSI…</div>
       <div id="artGrid" class="art-grid" aria-live="polite"></div>
       <div id="emptyState" class="empty-state" hidden><span>◌</span><h3>Belum ada karya ditemukan</h3><p>Coba kata kunci atau kategori lain.</p></div>
     </section>
