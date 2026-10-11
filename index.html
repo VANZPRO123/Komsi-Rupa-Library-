@@ -7,11 +7,12 @@
   <title>KOMSI RUPA LIBRARY</title>
   <link rel="stylesheet" href="style.css">
 
-  <!-- Muat Supabase JS dari CDN utama. -->
+  <!-- Dua CDN langsung: jika CDN pertama gagal, browser tetap mencoba CDN kedua. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-  <!-- app.js menggunakan window.supabase; versi dinaikkan untuk melewati cache lama. -->
-  <script defer src="app.js?v=20261011-supabase3"></script>
+  <!-- Naikkan versi agar browser tidak memakai app.js lama dari cache. -->
+  <script defer src="app.js?v=20261011-supabase4"></script>
 </head>
 <body>
   <header class="topbar">
@@ -21,7 +22,7 @@
     <nav class="nav">
       <a class="nav-link active" href="#library">Library</a>
       <button id="favoritesToggle" class="text-button" type="button">♡ Favorit <span id="favoriteCount">0</span></button>
-      <button id="adminOpen" class="admin-button" type="button">Admin ↗</button>
+      <button id="adminOpen" class="admin-button" type="button" onclick="document.getElementById('adminDialog').showModal()">Admin ↗</button>
     </nav>
   </header>
 
