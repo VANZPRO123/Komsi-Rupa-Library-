@@ -273,7 +273,7 @@
     try {
       // Hanya hapus record yang dipilih; RLS Supabase tetap wajib membatasi admin.
       const { data: rows, error: readError } = await supabase.from(TABLE)
-        .select("id,image_url,file_url,preview_url")
+        .select("id,image_url,file_url")
         .eq("id", id).limit(1);
       if (readError) throw readError;
       if (!rows || rows.length === 0) throw new Error("Karya tidak ditemukan atau akses ditolak.");
@@ -282,7 +282,7 @@
       if (deleteError) throw deleteError;
 
       const row = rows[0];
-      const paths = [...new Set([row.file_url, row.image_url, row.preview_url]
+      const paths = [...new Set([row.file_url, row.image_url]
         .map(storagePathFromPublicUrl).filter(Boolean))];
       let storageWarning = "";
       if (paths.length) {
