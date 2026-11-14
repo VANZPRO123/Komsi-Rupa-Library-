@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="KOMSI RUPA LIBRARY — ruang arsip, referensi, dan eksplorasi visual.">
   <title>KOMSI RUPA LIBRARY</title>
-  <link rel="stylesheet" href="style.css?v=20261012-final">
+  <link rel="stylesheet" href="style.css?v=20261114-phase1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     if (!window.supabase) {
       document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script defer src="app.js?v=20261114-delete-fix2"></script>
+  <script defer src="app.js?v=20261114-phase1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -61,12 +61,14 @@
           <span class="search-icon" aria-hidden="true">⌕</span>
           <input id="searchInput" type="search" placeholder="Cari karya, kreator, kategori..." autocomplete="off">
         </label>
+        <button type="button" class="favorites-toggle" id="favoritesToggle" aria-pressed="false">♡ Favorit <span id="favoriteCount">0</span></button>
         <label class="sort-box">
           <span class="sr-only">Urutkan karya</span>
           <select id="sortSelect">
             <option value="newest">Terbaru</option>
             <option value="oldest">Terlama</option>
             <option value="title">Nama A–Z</option>
+            <option value="popular">Paling banyak dilihat</option>
           </select>
         </label>
       </div>
@@ -112,6 +114,7 @@
     </form>
     <section id="uploadPanel" class="upload-panel" hidden>
       <div class="dialog-head"><h3>Unggah karya</h3><button type="button" id="logoutButton" class="text-button">Keluar</button></div>
+      <div id="adminStats" class="admin-stats" aria-live="polite"><p>Memuat statistik katalog…</p></div>
       <form id="uploadForm" class="form-stack">
         <label for="artTitle">Judul karya</label>
         <input id="artTitle" name="title" type="text" placeholder="Judul karya" required>
@@ -125,6 +128,8 @@
         </select>
         <label for="artCreator">Creator / Nama Kreator</label>
         <input id="artCreator" name="creator" type="text" placeholder="Masukkan nama kreator" required>
+        <label for="artTags">Tag (pisahkan dengan koma)</label>
+        <input id="artTags" name="tags" type="text" placeholder="mis. poster, tipografi, digital art">
         <label for="artDescription">Deskripsi</label>
         <textarea id="artDescription" name="description" rows="3" placeholder="Ceritakan sedikit tentang karya ini"></textarea>
         <label for="artFile">Pilih berkas</label>
