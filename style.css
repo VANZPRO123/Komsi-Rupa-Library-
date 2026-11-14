@@ -723,3 +723,15 @@ button, input, select, textarea { min-width:0; }
   .hero-title { font-size:2.05rem; }
   .collection-tools { grid-template-columns:minmax(0,1fr) 96px; }
 }
+
+
+/* Distinct actions: bookmark = favorite, heart = like */
+.favorite-button { display:grid; place-items:center; }
+.favorite-button svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.favorite-button.saved svg { fill:#d9b85d; stroke:#8b7132; }
+.art-social-actions { align-items:center; }
+.art-like-button { display:inline-flex; align-items:center; gap:5px; min-height:28px; }
+.art-like-button svg,.art-like-action svg,.art-favorite-action svg { width:17px; height:17px; flex:0 0 17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.art-like-button.liked svg,.art-like-action.liked svg { fill:#d04464; stroke:#d04464; }
+.art-favorite-action.saved svg { fill:#d9b85d; stroke:#8b7132; }
+.art-like-action,.art-favorite-action { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
