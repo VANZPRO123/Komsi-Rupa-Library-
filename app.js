@@ -233,7 +233,6 @@
     const { data, error } = await supabase.from("artwork_favorites").select("artwork_id").eq("user_id", currentUser.id);
     if (error) { console.warn("Favorit akun belum dapat dimuat:", error.message); return; }
     favorites = new Set((data || []).map(row => String(row.artwork_id)));
-    try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
     render();
   }
 
@@ -252,6 +251,9 @@
         if (error) throw error;
       } catch (error) {
         wasSaved ? favorites.add(id) : favorites.delete(id);
+        if (!currentUser) {
+          try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
+        }
         render();
         showDeleteMessage("Favorit belum tersinkron: " + getErrorMessage(error));
       }
@@ -295,6 +297,10 @@
       } else {
         message.textContent = "Pendaftaran diterima. Cek email untuk konfirmasi, lalu masuk.";
         message.style.color = "#4e7812";
+        $("#signupForm").hidden = true;
+        $("#loginForm").hidden = false;
+        $("#adminEmail").value = $("#memberEmail").value.trim();
+        showMessage("Pendaftaran diterima. Silakan cek email untuk konfirmasi sebelum masuk.", true);
       }
     } catch (error) { message.textContent = "Pendaftaran gagal: " + getErrorMessage(error); }
     finally { button.disabled = false; }
@@ -302,6 +308,7 @@
 
   async function saveMemberProfile(event) {
     event.preventDefault();
+    if (!supabase || !currentUser) { $("#profileMessage").textContent = "Sesi akun berakhir. Silakan masuk kembali."; return; }
     const display_name = $("#profileDisplayName").value.trim();
     const bio = $("#profileBio").value.trim();
     const message = $("#profileMessage");
