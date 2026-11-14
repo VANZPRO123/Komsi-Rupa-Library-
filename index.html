@@ -125,6 +125,7 @@
     <section id="uploadPanel" class="upload-panel" hidden>
       <div class="dialog-head member-account-header"><div><p class="section-kicker">RUANG PERSONAL</p><h3 id="memberGreeting">Akun anggota</h3><p id="memberEmailLabel" class="profile-email"></p></div><button type="button" id="logoutButton" class="member-logout-button">Keluar ↗</button></div>
       <form id="profileForm" class="profile-form member-profile-form">
+        <div class="member-avatar-row"><div class="member-avatar-frame"><img id="memberAvatarPreview" alt="Foto profil anggota" hidden><span id="memberAvatarFallback">K</span></div><div class="member-avatar-controls"><strong>Foto profil</strong><span>Gunakan JPG, PNG, atau WebP maksimal 3 MB.</span><label class="avatar-file-label" for="profileAvatarFile">Pilih foto</label><input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div>
         <label for="profileDisplayName">Nama profil</label><input id="profileDisplayName" type="text" maxlength="80" required>
         <label for="profileBio">Bio singkat</label><textarea id="profileBio" rows="2" maxlength="240"></textarea>
         <button type="submit" class="secondary-button">Simpan profil</button><p id="profileMessage" class="form-message" role="status"></p>
