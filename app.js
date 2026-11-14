@@ -243,11 +243,11 @@
     wasSaved ? favorites.delete(id) : favorites.add(id);
     try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
     render();
-    if (supabase && currentUser && /^\\d+$/.test(id)) {
+    if (supabase && currentUser && /^\d+$/.test(id)) {
       try {
         const request = wasSaved
           ? supabase.from("artwork_favorites").delete().eq("user_id", currentUser.id).eq("artwork_id", Number(id))
-          : supabase.from("artwork_favorites").upsert({ user_id: currentUser.id, artwork_id: Number(id) }, { onConflict: "user_id,artwork_id" });
+          : supabase.from("artwork_favorites").insert({ user_id: currentUser.id, artwork_id: Number(id) });
         const { error } = await request;
         if (error) throw error;
       } catch (error) {
@@ -381,7 +381,7 @@
 
   async function uploadArtwork(event) {
     event.preventDefault();
-    if (!supabase || !currentUser) { showMessage("Silakan masuk sebagai admin terlebih dahulu."); return; }
+    if (!supabase || !currentUser) { showMessage("Silakan masuk ke akun anggota terlebih dahulu."); return; }
     const file = $("#artFile")?.files?.[0];
     const previewFile = $("#artPreviewFile")?.files?.[0];
     if (!file) { showMessage("Pilih file karya terlebih dahulu."); return; }
@@ -462,7 +462,7 @@
 
   async function deleteArtwork(id) {
     if (!supabase || !currentUser) {
-      showDeleteMessage("Masuk sebagai admin untuk menghapus karya.");
+      showDeleteMessage("Masuk ke akun anggota untuk menghapus karya milikmu.");
       return;
     }
     const artwork = artworks.find(item => String(item.id) === String(id));
@@ -475,7 +475,7 @@
     try {
       // SELECT hanya memakai kolom inti yang diperlukan; preview_url tidak diwajibkan.
       const { data: rows, error: readError } = await supabase.from(TABLE)
-        .select("id,image_url,file_url")
+        .select("id,image_url,preview_url,file_url")
         .eq("id", id).limit(1);
       if (readError) throw readError;
       if (!rows || rows.length === 0) {
