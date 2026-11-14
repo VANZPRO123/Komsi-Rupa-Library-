@@ -64,7 +64,7 @@
   }
 
   function normalizeArtwork(row) {
-    const preview = row.preview_url || row.image_url || row.file_url || "";
+    const preview = row.preview_url || (isVideo(row) ? "" : row.image_url || row.file_url || "");
     return {
       ...row,
       creator: row.creator || row.created_by_name || row.created_by || "KOMSI Library",
@@ -100,7 +100,7 @@
     const query = ($("#searchInput")?.value || "").trim().toLowerCase();
     const sort = $("#sortSelect")?.value || "newest";
     const result = artworks.filter(a =>
-      (activeCategory === "Semua" || a.category === activeCategory) &&
+      (activeCategory === "Semua karya" || a.category === activeCategory) &&
       (!favoritesOnly || favorites.has(String(a.id))) &&
       (!query || [a.title, a.category, a.creator, a.description, a.tags].join(" ").toLowerCase().includes(query))
     );
@@ -145,7 +145,7 @@
   }
 
   async function recordArtworkView(id) {
-    if (!supabase || !/^\\d+$/.test(String(id))) return;
+    if (!supabase || !/^\d+$/.test(String(id))) return;
     const visitorId = getVisitorId();
     if (!visitorId) return;
     try {
@@ -279,7 +279,7 @@
     event.preventDefault();
     if (!supabase || !currentUser) { showMessage("Silakan masuk sebagai admin terlebih dahulu."); return; }
     const file = $("#artFile")?.files?.[0];
-    const previewFile = $("#artPreview")?.files?.[0];
+    const previewFile = $("#artPreviewFile")?.files?.[0];
     if (!file) { showMessage("Pilih file karya terlebih dahulu."); return; }
     if (file.size > MAX_FILE_SIZE) { showMessage("Ukuran file melebihi 50 MB. Kompres file terlebih dahulu."); return; }
 
@@ -317,7 +317,8 @@
         category: $("#artCategory").value,
         creator: $("#artCreator")?.value.trim() || "",
         tags,
-        image_url: previewUrl,
+        image_url: previewUrl || fileUrl,
+        preview_url: previewUrl,
         file_url: fileUrl,
         file_name: file.name,
         file_size: file.size,
@@ -492,6 +493,7 @@
           currentUser = data.session.user;
           if ($("#uploadPanel")) $("#uploadPanel").hidden = false;
           if ($("#loginForm")) $("#loginForm").hidden = true;
+          refreshAdminStats();
         }
       }).catch(error => console.warn("Pemeriksaan sesi gagal:", error));
     }
