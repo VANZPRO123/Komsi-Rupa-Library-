@@ -600,6 +600,10 @@
       const card = event.target.closest("[data-open]");
       if (card) openDetail(card.dataset.open);
     });
+    $("#memberPortfolio")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-member-open]");
+      if (button) openDetail(button.dataset.memberOpen);
+    });
     $("#clearCreatorFilter")?.addEventListener("click", () => filterByCreator(""));
     $("#favoritesToggle")?.addEventListener("click", () => {
       favoritesOnly = !favoritesOnly;
