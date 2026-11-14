@@ -550,3 +550,19 @@ button { color: inherit; }
 .notification-unread-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#d04464}
 .notification-empty{padding:24px 10px;text-align:center;color:var(--muted);font-size:11px;line-height:1.7}
 @media(max-width:520px){.notification-dialog{padding:18px 14px}.header-nav>a{display:none}}
+
+
+/* Threaded discussion and replies */
+.art-comment { align-items:flex-start; }
+.art-comment-content { flex:1; min-width:0; }
+.art-comment-reply { margin-left:28px; padding:9px 0 9px 12px; border-left:2px solid var(--line); }
+.art-comment-reply .art-comment-content { min-width:0; }
+.art-comment .text-button { margin:5px 10px 0 0; padding:0; border:0; background:transparent; color:var(--muted); font:inherit; font-size:10px; cursor:pointer; }
+.art-reply-form { display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 2px; }
+.art-reply-form[hidden] { display:none; }
+.art-reply-form textarea { flex:1 1 180px; min-width:0; resize:vertical; padding:8px 10px; border:1px solid var(--line); border-radius:9px; font:inherit; font-size:11px; }
+.art-reply-form button { border:0; border-radius:8px; padding:8px 12px; background:var(--ink); color:#fff; font:inherit; font-size:10px; cursor:pointer; }
+@media (max-width:520px) {
+  .art-comment-reply { margin-left:14px; }
+  .art-reply-form button { width:100%; }
+}
