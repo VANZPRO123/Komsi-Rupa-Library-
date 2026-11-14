@@ -574,3 +574,11 @@ button { color: inherit; }
 .art-comment-edit-form textarea { width:100%; min-width:0; resize:vertical; padding:9px 11px; border:1px solid var(--line); border-radius:9px; font:inherit; font-size:12px; }
 .art-comment-edit-form > div { display:flex; align-items:center; gap:12px; }
 .art-comment-edit-form button[type="submit"] { border:0; border-radius:8px; padding:8px 12px; background:var(--ink); color:#fff; font:inherit; font-size:11px; cursor:pointer; }
+
+
+/* Pengurutan diskusi karya */
+.art-comments-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.art-comments-heading h3 { margin:0; }
+.comment-sort-label { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:10px; }
+.comment-sort-label select { max-width:120px; border:1px solid var(--line); border-radius:8px; padding:6px 8px; background:var(--surface, #fff); color:var(--ink); font:inherit; font-size:10px; }
+@media (max-width:480px) { .art-comments-heading { align-items:flex-start; } }
