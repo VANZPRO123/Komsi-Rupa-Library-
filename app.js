@@ -331,9 +331,9 @@
         previewUrl = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(previewPath).data.publicUrl;
       }
 
-      /* Menggunakan kolom inti yang ada pada skema awal: title, description,
-         category, image_url, file_url, file_name, file_size, created_by.
-         preview_url/creator/mime_type/uploaded_by tidak diasumsikan tersedia. */
+      /* Kolom ini sudah diverifikasi terhadap skema public.artworks:
+         title, description, category, creator, tags, image_url, preview_url,
+         file_url, file_name, file_size, dan created_by. */
       const tags = ($("#artTags")?.value || "").split(",").map(tag => tag.trim()).filter(Boolean).slice(0, 20);
       const record = {
         title: $("#artTitle").value.trim(),
