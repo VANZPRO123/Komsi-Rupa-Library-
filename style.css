@@ -821,3 +821,31 @@ button, input, select, textarea { min-width:0; }
   }
   .art-thumb-like span { font-size:10px; }
 }
+
+
+/* Comment footer: separate timestamp from reply and moderation actions */
+.art-comment-footer {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px 14px;
+  margin-top:9px;
+  min-height:24px;
+}
+.art-comment-footer time {
+  display:inline-block;
+  margin:0 4px 0 0;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+}
+.art-comment-footer .text-button {
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:2px 4px;
+  line-height:1.4;
+}
+@media(max-width:480px) {
+  .art-comment-footer { gap:7px 12px; margin-top:10px; }
+}
