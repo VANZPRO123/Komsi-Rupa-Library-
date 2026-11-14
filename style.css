@@ -629,3 +629,97 @@ button { color: inherit; }
 @media(max-width:520px){.notification-dialog{width:calc(100% - 16px);max-height:86vh;padding:17px 13px;border-radius:18px}.notification-list{max-height:62vh}.notification-item{padding:12px 7px}.notification-copy strong{font-size:11px}}
 
 .notification-live-status{display:inline-flex;align-items:center;gap:5px;margin-top:2px;color:#92938d;font-size:9px;font-weight:600}.notification-live-status i{width:6px;height:6px;border-radius:50%;background:#c5a45d}.notification-live-status.is-live{color:#62824b}.notification-live-status.is-live i{background:#78a65b;box-shadow:0 0 0 3px rgba(120,166,91,.13)}.notification-live-status.is-offline{color:#b36d55}.notification-live-status.is-offline i{background:#c77a5d}.notification-toast{position:fixed;z-index:1200;top:18px;right:18px;display:flex;align-items:center;gap:11px;width:min(350px,calc(100vw - 28px));padding:13px 15px;border:1px solid rgba(30,35,25,.1);border-radius:15px;background:#fff;box-shadow:0 14px 45px rgba(20,24,18,.17);opacity:0;transform:translateY(-12px);pointer-events:none;transition:opacity .22s ease,transform .22s ease}.notification-toast.visible{opacity:1;transform:translateY(0)}.notification-toast-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#eff2e8;color:#626c4c;font-size:16px}.notification-toast-copy{display:grid;gap:3px;min-width:0}.notification-toast-copy strong{font-size:11px}.notification-toast-copy span{overflow:hidden;color:#77796f;font-size:10px;text-overflow:ellipsis;white-space:nowrap}@media(max-width:520px){.notification-toast{top:10px;right:10px}}
+
+
+/* Responsive refinement — phone, tablet, and compact desktop */
+html, body { max-width:100%; overflow-x:clip; }
+img, video, canvas, iframe { max-width:100%; }
+button, input, select, textarea { min-width:0; }
+.art-grid > *, .member-portfolio > *, .public-profile-works > * { min-width:0; }
+.art-card, .artwork-card, .art-item, .artwork-item { overflow-wrap:anywhere; }
+.dialog, dialog { max-width:calc(100vw - 24px); }
+.dialog[open] { overflow-y:auto; overscroll-behavior:contain; }
+#detailContent, #publicProfileContent, .upload-panel, .profile-form { min-width:0; }
+.form-stack input, .form-stack select, .form-stack textarea,
+.profile-form input, .profile-form textarea { max-width:100%; }
+.collection-tools { grid-template-columns:minmax(0,1fr) auto minmax(120px,145px); align-items:center; }
+.collection-tools .search-box { grid-column:auto; }
+.collection-tools .favorites-toggle { min-height:52px; white-space:nowrap; }
+.collection-tools .sort-box { min-width:0; }
+@media (max-width: 900px) {
+  .art-grid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+  .collection-tools { grid-template-columns:minmax(0,1fr) auto; }
+  .collection-tools .search-box { grid-column:1 / -1; }
+  .collection-tools .favorites-toggle { justify-self:stretch; }
+  .collection-tools .sort-box { min-height:52px; }
+  .admin-stat-grid, .admin-stat-grid.is-admin { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .member-profile-visit-strip { flex-wrap:wrap; }
+}
+@media (max-width: 600px) {
+  .site-header { position:sticky; top:0; min-height:62px; padding:10px 16px; gap:8px; }
+  .brand-name { font-size:clamp(8px,2.4vw,10px); letter-spacing:.09em; }
+  .header-nav { gap:8px; }
+  .notification-open { width:36px; height:36px; }
+  .admin-link { min-height:38px; padding:9px 12px; font-size:10px; white-space:nowrap; }
+  .hero { padding:58px 18px 0; }
+  .hero-title { font-size:clamp(2.35rem,10.4vw,3.7rem); }
+  .hero-line { white-space:normal; }
+  .hero-line-accent { overflow-wrap:anywhere; }
+  .hero-index { letter-spacing:.16em; font-size:8px; }
+  .hero-description { max-width:42rem; line-height:1.75; }
+  .hero-watermark { right:-24%; opacity:.8; }
+  .hero-footer { gap:12px; margin-top:58px; }
+  .hero-footer > div span { font-size:8px; line-height:1.6; }
+  .collection { padding:42px 16px 58px; }
+  .collection-tools { display:grid; grid-template-columns:minmax(0,1fr) minmax(105px,.7fr); gap:9px; }
+  .collection-tools .search-box { grid-column:1 / -1; }
+  .collection-tools .favorites-toggle { width:100%; min-height:48px; padding:0 10px; font-size:11px; }
+  .collection-tools .sort-box { width:100%; min-height:48px; }
+  .search-box input { font-size:13px; }
+  .sort-box select { font-size:12px; }
+  .category-list { flex-wrap:nowrap; overflow-x:auto; padding:2px 1px 8px; margin:16px 0 20px; scrollbar-width:thin; overscroll-behavior-x:contain; }
+  .category-chip { flex:0 0 auto; }
+  .art-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px; }
+  .art-grid img, .art-card img, .artwork-card img, .art-item img, .artwork-item img { aspect-ratio:4/5; max-height:none; }
+  .art-card-content, .artwork-info, .art-meta, .art-info { padding:10px; }
+  .art-card h3, .artwork-card h3, .art-item h3, .artwork-item h3,
+  .art-card-content h3, .artwork-info h3 { font-size:12px; }
+  .art-social-actions { gap:8px; font-size:10px; }
+  .dialog, .detail-dialog, .public-profile-dialog, .notification-dialog {
+    width:calc(100vw - 16px); max-width:calc(100vw - 16px);
+    max-height:calc(100dvh - 16px); margin:auto; padding:17px 14px;
+    border-radius:17px;
+  }
+  .dialog-head h2 { font-size:23px; }
+  .form-stack { gap:9px; }
+  .form-stack input:not([type=file]), .form-stack select, .form-stack textarea,
+  .profile-form input:not([type=file]), .profile-form textarea { min-height:46px; font-size:16px; }
+  .form-stack input[type=file] { max-width:100%; font-size:11px; }
+  .member-account-header { gap:10px; }
+  .member-avatar-row { flex-wrap:wrap; }
+  .member-profile-visit-strip { display:grid; grid-template-columns:1fr; gap:12px; }
+  .member-portfolio { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .art-comment-form { align-items:stretch; flex-direction:column; }
+  .art-comment-form button { min-height:42px; }
+  .art-comments-heading { flex-wrap:wrap; }
+  .site-footer { gap:10px; padding:18px 16px; line-height:1.6; }
+}
+@media (max-width: 390px) {
+  .brand-name { letter-spacing:.055em; }
+  .admin-link { padding:8px 9px; font-size:9px; }
+  .hero { padding-left:15px; padding-right:15px; }
+  .hero-title { font-size:clamp(2.15rem,10vw,2.65rem); }
+  .hero-index { font-size:7px; letter-spacing:.12em; }
+  .collection { padding-left:13px; padding-right:13px; }
+  .art-grid { gap:8px; }
+  .art-card-content, .artwork-info, .art-meta, .art-info { padding:8px; }
+  .art-card h3, .artwork-card h3, .art-item h3, .artwork-item h3,
+  .art-card-content h3, .artwork-info h3 { font-size:11px; }
+  .dialog, .detail-dialog, .public-profile-dialog, .notification-dialog { padding:15px 12px; }
+}
+@media (max-width: 340px) {
+  .header-nav { gap:5px; }
+  .admin-link { padding:7px 8px; }
+  .hero-title { font-size:2.05rem; }
+  .collection-tools { grid-template-columns:minmax(0,1fr) 96px; }
+}
