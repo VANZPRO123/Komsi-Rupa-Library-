@@ -490,9 +490,16 @@
     if (oldForm) oldForm.remove();
     const form = document.createElement("form");
     form.id = "artworkEditForm";
-    form.className = "profile-form";
+    form.className = "profile-form artwork-edit-form";
+    const currentPreview = artwork.preview_url || artwork.image_url || artwork.file_url;
+    const currentMedia = currentPreview
+      ? (isVideo(artwork) && !artwork.preview_url
+          ? '<div class="edit-preview-placeholder">▶ VIDEO</div>'
+          : `<img src="${escapeHtml(currentPreview)}" alt="Pratinjau karya saat ini">`)
+      : '<div class="edit-preview-placeholder">PREVIEW BELUM ADA</div>';
     form.innerHTML = `
-      <h3 class="member-section-title">Edit karya</h3>
+      <div class="edit-form-heading"><p class="section-kicker">PENGELOLAAN KARYA</p><h3 class="member-section-title">Edit karya</h3><p class="member-form-intro">Perbarui informasi atau ganti berkas karya yang sudah kamu unggah.</p></div>
+      <div class="edit-current-preview">${currentMedia}<span>Pratinjau saat ini</span></div>
       <label for="editArtTitle">Judul karya</label>
       <input id="editArtTitle" name="title" maxlength="160" required value="${escapeHtml(artwork.title || "")}">
       <label for="editArtCategory">Kategori</label>
