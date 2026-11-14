@@ -1138,6 +1138,8 @@
     });
     $("#adminOpen")?.addEventListener("click", () => $("#adminDialog")?.showModal());
     $("#notificationOpen")?.addEventListener("click", openNotifications);
+    window.addEventListener("focus", () => { if (currentUser) loadNotifications(); });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && currentUser) loadNotifications(); });
     $("#notificationList")?.addEventListener("click", event => { const item = event.target.closest("[data-notification-id]"); if (item) handleNotificationClick(item); });
     $("#markAllNotificationsRead")?.addEventListener("click", async () => {
       if (!currentUser || !supabase) return;
