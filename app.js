@@ -413,13 +413,29 @@
   async function submitArtworkComment(event) {
     event.preventDefault();
     if (!currentUser) { alert("Masuk untuk berkomentar."); return; }
-    const form = event.currentTarget, id = form.dataset.commentArtwork;
-    const input = form.querySelector("textarea"), body = input?.value.trim();
+    // Form ini diproses melalui event delegation pada #detailContent,
+    // sehingga event.currentTarget adalah container, bukan elemen form.
+    const form = event.target?.closest?.("#detailCommentForm");
+    const rawId = form?.dataset?.commentArtwork;
+    const id = Number(rawId);
+    const input = form?.querySelector("textarea");
+    const body = input?.value?.trim();
+    if (!form || !rawId || !Number.isSafeInteger(id) || id <= 0) {
+      showDeleteMessage("Komentar tidak dapat dikirim karena ID karya tidak terbaca. Tutup detail karya lalu buka kembali.");
+      console.error("ID karya untuk komentar tidak valid:", { rawId, form });
+      return;
+    }
     if (!body) return;
-    const { error } = await supabase.from("artwork_comments").insert({ artwork_id: Number(id), user_id: currentUser.id, body });
+    const { error } = await supabase.from("artwork_comments").insert({
+      artwork_id: id,
+      user_id: currentUser.id,
+      body
+    });
     if (error) { showDeleteMessage("Komentar gagal dikirim: " + getErrorMessage(error)); return; }
     artworkCommentCounts.set(String(id), Number(artworkCommentCounts.get(String(id)) || 0) + 1);
-    input.value = ""; await loadArtworkComments(id); render();
+    input.value = "";
+    await loadArtworkComments(id);
+    render();
   }
 
   async function deleteArtworkComment(id) {
