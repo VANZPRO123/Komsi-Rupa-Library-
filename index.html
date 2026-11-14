@@ -13,7 +13,7 @@
       document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script defer src="app.js?v=20261012-creator-delete"></script>
+  <script defer src="app.js?v=20261114-delete-fix2"></script>
 </head>
 <body>
   <header class="site-header">
@@ -137,6 +137,7 @@
 
   <dialog class="dialog detail-dialog" id="detailDialog">
     <button type="button" class="icon-button detail-close" data-close-dialog="detailDialog" aria-label="Tutup">×</button>
+    <p id="detailMessage" class="form-message" role="status" hidden></p>
     <div id="detailContent"></div>
   </dialog>
 
