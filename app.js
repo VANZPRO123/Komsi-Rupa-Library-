@@ -143,7 +143,7 @@
     panel.innerHTML = mine.length
       ? mine.map(item => `<article class="member-work-item">
           <div><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Visual")} · ${Number(item.view_count || 0).toLocaleString("id-ID")} dilihat</span></div>
-          <button type="button" class="text-button" data-member-open="${escapeHtml(item.id)}">Lihat karya ↗</button>
+          <div class="member-work-actions"><button type="button" class="text-button" data-member-open="${escapeHtml(item.id)}">Lihat karya ↗</button><button type="button" class="text-button" data-member-edit="${escapeHtml(item.id)}">Edit karya ✎</button></div>
         </article>`).join("")
       : '<p class="member-empty">Kamu belum mengunggah karya. Karya yang kamu unggah akan muncul di sini.</p>';
   }
@@ -722,6 +722,12 @@
       if (card) openDetail(card.dataset.open);
     });
     $("#memberPortfolio")?.addEventListener("click", event => {
+      const editButton = event.target.closest("[data-member-edit]");
+      if (editButton) {
+        openDetail(editButton.dataset.memberEdit);
+        openArtworkEditor(editButton.dataset.memberEdit);
+        return;
+      }
       const button = event.target.closest("[data-member-open]");
       if (button) openDetail(button.dataset.memberOpen);
     });
