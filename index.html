@@ -129,6 +129,15 @@
         <label for="profileBio">Bio singkat</label><textarea id="profileBio" rows="2" maxlength="240"></textarea>
         <button type="submit" class="secondary-button">Simpan profil</button><p id="profileMessage" class="form-message" role="status"></p>
       </form>
+      <form id="securityForm" class="profile-form member-security-form">
+        <div class="member-section-heading"><div><p class="section-kicker">KEAMANAN AKUN</p><h3 class="member-section-title">Ubah kata sandi</h3><p class="member-form-intro">Gunakan kata sandi baru yang kuat dan tidak dipakai di akun lain.</p></div></div>
+        <label for="newMemberPassword">Kata sandi baru</label>
+        <input id="newMemberPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Minimal 8 karakter" required>
+        <label for="confirmMemberPassword">Konfirmasi kata sandi</label>
+        <input id="confirmMemberPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Ulangi kata sandi baru" required>
+        <button type="submit" class="secondary-button">Perbarui kata sandi</button>
+        <p id="securityMessage" class="form-message" role="status"></p>
+      </form>
       <div class="member-section-heading"><div><p class="section-kicker">KOLEKSI PERSONAL</p><h3 class="member-section-title">Portofolio saya</h3></div></div>
       <div id="memberPortfolio" class="member-portfolio" aria-live="polite"></div>
       <div id="adminStats" class="admin-stats" aria-live="polite"><p>Memuat statistik katalog…</p></div>
