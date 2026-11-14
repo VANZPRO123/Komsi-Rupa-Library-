@@ -35,6 +35,7 @@
   let supabase = null;
   let artworks = [];
   let activeCategory = "Semua karya";
+  let feedMode = "all";
   let favoritesOnly = false;
   let activeCreator = "";
   let currentUser = null;
@@ -112,9 +113,15 @@
       (activeCategory === "Semua karya" || a.category === activeCategory) &&
       (!favoritesOnly || favorites.has(String(a.id))) &&
       (!activeCreator || a.creator === activeCreator) &&
+      (feedMode !== "following" || (currentUser && followingMembers.has(String(a.created_by || "")))) &&
       (!query || [a.title, a.category, a.creator, a.description, a.tags].join(" ").toLowerCase().includes(query))
     );
-    if (sort === "title") result.sort((a,b) => (a.title || "").localeCompare(b.title || "", "id"));
+    if (feedMode === "explore") {
+      result.sort((a,b) => {
+        const score = item => Number(artworkLikeCounts.get(String(item.id)) || 0) * 3 + Number(artworkCommentCounts.get(String(item.id)) || 0) * 2 + Number(item.view_count || 0) * 0.1;
+        return score(b) - score(a) || new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      });
+    } else if (sort === "title") result.sort((a,b) => (a.title || "").localeCompare(b.title || "", "id"));
     else if (sort === "oldest") result.sort((a,b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
     else if (sort === "popular") result.sort((a,b) => Number(b.view_count || 0) - Number(a.view_count || 0) || new Date(b.created_at || 0) - new Date(a.created_at || 0));
     else result.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
@@ -127,7 +134,12 @@
     const list = filteredArtworks();
     if ($("#resultCount")) $("#resultCount").textContent = `${list.length} karya`;
     if ($("#favoriteCount")) $("#favoriteCount").textContent = favorites.size;
-    if ($("#emptyState")) $("#emptyState").hidden = list.length !== 0;
+    if ($("#emptyState")) {
+      $("#emptyState").hidden = list.length !== 0;
+      const heading = $("#emptyState h3"), description = $("#emptyState p");
+      if (heading) heading.textContent = feedMode === "following" ? "Belum ada karya dari kreator yang kamu ikuti." : "Belum ada karya ditemukan.";
+      if (description) description.textContent = feedMode === "following" ? (currentUser ? "Ikuti anggota KOMSI untuk mengisi berandamu dengan karya terbaru mereka." : "Masuk ke akun anggota, lalu ikuti kreator untuk melihat karya mereka di sini.") : "Coba kata kunci lain atau pilih kategori yang berbeda.";
+    }
     grid.innerHTML = list.map(a => {
       const thumb = a.preview_url || a.image_url || a.file_url;
       const media = thumb
@@ -1030,6 +1042,23 @@
       if (button) openDetail(button.dataset.memberOpen);
     });
     $("#clearCreatorFilter")?.addEventListener("click", () => filterByCreator(""));
+    $("#feedTabs")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-feed-mode]");
+      if (!button) return;
+      feedMode = button.dataset.feedMode;
+      if (feedMode === "following" && !currentUser) {
+        alert("Masuk ke akun anggota untuk melihat feed kreator yang kamu ikuti.");
+        $("#adminDialog")?.showModal();
+        feedMode = "all";
+      }
+      document.querySelectorAll("#feedTabs [data-feed-mode]").forEach(tab => {
+        const active = tab.dataset.feedMode === feedMode;
+        tab.classList.toggle("active", active);
+        tab.setAttribute("aria-pressed", String(active));
+      });
+      if ($("#sortSelect")) $("#sortSelect").disabled = feedMode === "explore";
+      render();
+    });
     $("#favoritesToggle")?.addEventListener("click", () => {
       favoritesOnly = !favoritesOnly;
       $("#favoritesToggle").style.fontWeight = favoritesOnly ? "700" : "400";
