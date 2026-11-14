@@ -504,3 +504,18 @@ button { color: inherit; }
  .admin-stat-grid.is-member { grid-template-columns:repeat(3,minmax(0,1fr)); }
  .dashboard-member-row { min-width:480px; }
 }
+
+/* Social layer: likes and comments */
+.art-social-actions { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:9px; color:var(--muted); font-size:10px; }
+.art-like-button { border:0; background:transparent; padding:0; color:var(--ink); font:inherit; cursor:pointer; }
+.art-like-button.liked,.secondary-button.liked { color:#d04464; }
+.art-comments-section { margin-top:22px; padding-top:16px; border-top:1px solid var(--line); }
+.art-comments-section h3 { margin:0 0 12px; font-size:14px; }
+.art-comment { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
+.art-comment strong { font-size:11px; }
+.art-comment p { margin:4px 0; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.art-comment time { color:var(--muted); font-size:9px; }
+.art-comment-form { display:flex; gap:8px; align-items:flex-end; margin-top:12px; }
+.art-comment-form textarea { flex:1; min-width:0; resize:vertical; padding:10px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:12px; }
+.art-comment-form button { border:0; border-radius:9px; padding:10px 15px; background:var(--ink); color:white; cursor:pointer; }
+.art-comment-form button:disabled { opacity:.45; cursor:not-allowed; }
