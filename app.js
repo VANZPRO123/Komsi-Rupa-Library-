@@ -422,7 +422,7 @@
         return '<article class="art-comment ' + (isReply ? 'art-comment-reply' : '') + '"><div class="art-comment-content"><strong>' + escapeHtml(name) + '</strong><p>' + escapeHtml(row.body) + '</p><time>' + escapeHtml(prettyDate(row.created_at)) + '</time>' +
           (!isReply && currentUser ? '<button type="button" class="text-button" data-reply-toggle="' + row.id + '">Balas</button>' : '') +
           (own ? '<button type="button" class="text-button" data-comment-edit-toggle="' + row.id + '">Edit</button><button type="button" class="text-button" data-delete-comment="' + row.id + '">Hapus</button>' : '') +
-          (own ? '<form class="art-comment-edit-form" data-comment-edit-form="' + row.id + '" data-edit-artwork="' + Number(id) + '" hidden><textarea rows="2" maxlength="1000" required>' + escapeHtml(row.body) + '</textarea><div><button type="submit">Simpan perubahan</button><button type="button" class="text-button" data-comment-edit-cancel="' + row.id + '">Batal</button></div></form>' : '') +
+          (own ? '<form class="art-comment-edit-form" data-comment-edit-form="' + row.id + '" data-comment-artwork-id="' + Number(id) + '" hidden><textarea rows="2" maxlength="1000" required>' + escapeHtml(row.body) + '</textarea><div><button type="submit">Simpan perubahan</button><button type="button" class="text-button" data-comment-edit-cancel="' + row.id + '">Batal</button></div></form>' : '') +
           (!isReply && currentUser ? '<form class="art-reply-form" data-reply-form="' + row.id + '" data-reply-artwork="' + Number(id) + '" hidden><textarea rows="2" maxlength="1000" placeholder="Tulis balasan..."></textarea><button type="submit">Kirim balasan</button></form>' : '') +
           '</div></article>';
       };
@@ -463,7 +463,7 @@
     if (!currentUser) return;
     const form = event.target?.closest?.("[data-comment-edit-form]");
     const commentId = Number(form?.dataset?.commentEditForm);
-    const artworkId = Number(form?.dataset?.editArtwork);
+    const artworkId = Number(form?.dataset?.commentArtworkId);
     const body = form?.querySelector("textarea")?.value?.trim();
     if (!form || !Number.isSafeInteger(commentId) || commentId <= 0 ||
         !Number.isSafeInteger(artworkId) || artworkId <= 0 || !body) return;
