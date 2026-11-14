@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/member-accounts
   workflow_dispatch:
 
 permissions:
@@ -14,10 +13,12 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    # GitHub Pages production deployment must come from the default branch.
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
