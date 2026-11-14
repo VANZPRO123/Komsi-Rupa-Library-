@@ -449,7 +449,7 @@
   }
 
   function init() {
-    const required = ["#year","#searchInput","#sortSelect","#categories","#artGrid","#notice","#adminDialog","#loginForm","#adminMessage"];
+    const required = ["#searchInput","#sortSelect","#categories","#artGrid","#notice","#adminDialog","#loginForm","#adminMessage"];
     const missing = required.filter(selector => !$(selector));
     if (missing.length) console.warn("Elemen HTML belum ditemukan:", missing.join(", "));
 
