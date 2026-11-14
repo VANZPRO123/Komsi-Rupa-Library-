@@ -148,23 +148,8 @@
       : '<p class="member-empty">Kamu belum mengunggah karya. Karya yang kamu unggah akan muncul di sini.</p>';
   }
 
-  function getVisitorId() {
-    const key = "komsi-rupa-visitor-id";
-    try {
-      let id = localStorage.getItem(key);
-      if (!id) {
-        id = window.crypto?.randomUUID ? window.crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-          const r = Math.random() * 16 | 0;
-          return (c === "x" ? r : (r & 3 | 8)).toString(16);
-        });
-        localStorage.setItem(key, id);
-      }
-      return id;
-    } catch (_) { return null; }
-  }
-
   async function recordArtworkView(id) {
-    if (!supabase || !/^\\d+$/.test(String(id))) return;
+    if (!supabase || !/^\d+$/.test(String(id))) return;
     try {
       const { data, error } = await supabase.functions.invoke("record-artwork-view", {
         body: { artwork_id: Number(id) }
