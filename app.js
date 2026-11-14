@@ -719,7 +719,7 @@
       : `<div class="video-placeholder">Preview belum tersedia</div>`;
     const creatorButton = a.created_by ? `<button type="button" class="creator-filter-button" data-member-profile="${escapeHtml(a.created_by)}">${escapeHtml(a.creator || "Lihat profil kreator")} ↗</button>` : `<button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button>`;
     const liked = likedArtworks.has(String(a.id));
-    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: ${creatorButton}</p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions"><button class="secondary-button ${liked ? "liked" : ""}" data-detail-like="${escapeHtml(a.id)}" type="button">${liked ? "♥ Disukai" : "♡ Suka"} · ${Number(artworkLikeCounts.get(String(a.id)) || 0)}</button>${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo && (a.created_by === currentUser.id || currentUser.id === ADMIN_USER_ID) ? `<button class="secondary-button" data-edit-artwork="${escapeHtml(a.id)}" type="button">Edit karya</button><button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div><section class="art-comments-section"><div class="art-comments-heading"><h3>Diskusi karya</h3><label class="comment-sort-label"><span>Urutkan</span><select id="commentSort" aria-label="Urutkan komentar"><option value="newest">Terbaru</option><option value="oldest">Terlama</option></select></label></div><div id="artworkComments"><p class="dashboard-empty">Memuat komentar…</p></div><form id="detailCommentForm" data-comment-artwork="${escapeHtml(a.id)}" class="art-comment-form"><textarea rows="2" maxlength="1000" placeholder="${currentUser ? "Tulis komentar..." : "Masuk untuk berkomentar"}" ${currentUser ? "" : "disabled"}></textarea><button type="submit" ${currentUser ? "" : "disabled"}>Kirim</button></form></section></div></div></div>`;
+    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: ${creatorButton}</p>${Array.isArray(a.tags) && a.tags.length ? `<div class="detail-tags" aria-label="Tag karya"><span>Tag:</span>${a.tags.map(tag => `<button type="button" class="detail-tag-chip" data-tag-search="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")}</div>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions"><button class="secondary-button ${liked ? "liked" : ""}" data-detail-like="${escapeHtml(a.id)}" type="button">${liked ? "♥ Disukai" : "♡ Suka"} · ${Number(artworkLikeCounts.get(String(a.id)) || 0)}</button>${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo && (a.created_by === currentUser.id || currentUser.id === ADMIN_USER_ID) ? `<button class="secondary-button" data-edit-artwork="${escapeHtml(a.id)}" type="button">Edit karya</button><button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div><section class="art-comments-section"><div class="art-comments-heading"><h3>Diskusi karya</h3><label class="comment-sort-label"><span>Urutkan</span><select id="commentSort" aria-label="Urutkan komentar"><option value="newest">Terbaru</option><option value="oldest">Terlama</option></select></label></div><div id="artworkComments"><p class="dashboard-empty">Memuat komentar…</p></div><form id="detailCommentForm" data-comment-artwork="${escapeHtml(a.id)}" class="art-comment-form"><textarea rows="2" maxlength="1000" placeholder="${currentUser ? "Tulis komentar..." : "Masuk untuk berkomentar"}" ${currentUser ? "" : "disabled"}></textarea><button type="submit" ${currentUser ? "" : "disabled"}>Kirim</button></form></section></div></div></div>`;
     $("#detailDialog")?.showModal();
     loadArtworkComments(a.id);
     if (!a.is_demo) recordArtworkView(a.id);
@@ -1210,6 +1210,36 @@
       if (profileWorkButton) { const workId = profileWorkButton.dataset.profileWork; $("#profileDialog")?.close(); openDetail(workId); return; }
       const creatorButton = event.target.closest("[data-creator-filter]");
       if (creatorButton && !$("#artGrid")?.contains(creatorButton)) { event.preventDefault(); event.stopPropagation(); $("#detailDialog")?.close(); filterByCreator(creatorButton.dataset.creatorFilter); return; }
+      const tagButton = event.target.closest("[data-tag-search]");
+      if (tagButton) {
+        event.preventDefault();
+        const tag = tagButton.dataset.tagSearch || "";
+        const search = $("#searchInput");
+        if (search) search.value = tag;
+        activeCategory = "Semua karya";
+        activeCreator = "";
+        favoritesOnly = false;
+        feedMode = "all";
+        document.querySelectorAll("#categories [data-category]").forEach(el => {
+          const active = el.dataset.category === "Semua karya";
+          el.classList.toggle("active", active);
+          el.setAttribute("aria-pressed", String(active));
+        });
+        document.querySelectorAll("#feedTabs [data-feed-mode]").forEach(el => {
+          const active = el.dataset.feedMode === "all";
+          el.classList.toggle("active", active);
+          el.setAttribute("aria-pressed", String(active));
+        });
+        if ($("#favoritesToggle")) {
+          $("#favoritesToggle").style.fontWeight = "400";
+          $("#favoritesToggle").setAttribute("aria-pressed", "false");
+          $("#favoritesToggle").innerHTML = `♡ Favorit <span id="favoriteCount">${favorites.size}</span>`;
+        }
+        $("#detailDialog")?.close();
+        render();
+        $("#koleksi")?.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
       const followButton = event.target.closest("[data-follow-member]");
       if (followButton) { toggleMemberFollow(followButton.dataset.followMember); return; }
       const favoriteButton = event.target.closest("[data-detail-favorite]");
