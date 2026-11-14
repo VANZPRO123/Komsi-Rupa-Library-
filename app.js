@@ -34,7 +34,7 @@
 
   let supabase = null;
   let artworks = [];
-  let activeCategory = "Semua";
+  let activeCategory = "Semua karya";
   let favoritesOnly = false;
   let currentUser = null;
   let favorites = new Set();
@@ -104,7 +104,9 @@
       (!favoritesOnly || favorites.has(String(a.id))) &&
       (!query || [a.title, a.category, a.creator, a.description, a.tags].join(" ").toLowerCase().includes(query))
     );
-    if (sort === "az") result.sort((a,b) => (a.title || "").localeCompare(b.title || ""));
+    if (sort === "title") result.sort((a,b) => (a.title || "").localeCompare(b.title || "", "id"));
+    else if (sort === "oldest") result.sort((a,b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+    else if (sort === "popular") result.sort((a,b) => Number(b.view_count || 0) - Number(a.view_count || 0) || new Date(b.created_at || 0) - new Date(a.created_at || 0));
     else result.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     return result;
   }
@@ -123,8 +125,81 @@
         : `<div class="video-placeholder">KOMSI<br>RUPA</div>`;
       const id = escapeHtml(a.id);
       const saved = favorites.has(String(a.id));
-      return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><p class="art-creator">${escapeHtml(a.creator || "KOMSI Library")}</p></div></article>`;
+      return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><p class="art-creator">${escapeHtml(a.creator || "KOMSI Library")}</p><p class="art-views">◉ ${Number(a.view_count || 0).toLocaleString("id-ID")} dilihat</p></div></article>`;
     }).join("");
+  }
+
+  function getVisitorId() {
+    const key = "komsi-rupa-visitor-id";
+    try {
+      let id = localStorage.getItem(key);
+      if (!id) {
+        id = window.crypto?.randomUUID ? window.crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          return (c === "x" ? r : (r & 3 | 8)).toString(16);
+        });
+        localStorage.setItem(key, id);
+      }
+      return id;
+    } catch (_) { return null; }
+  }
+
+  async function recordArtworkView(id) {
+    if (!supabase || !/^\\d+$/.test(String(id))) return;
+    const visitorId = getVisitorId();
+    if (!visitorId) return;
+    try {
+      const { error } = await supabase.from("artwork_views").insert({ artwork_id: Number(id), visitor_id: visitorId });
+      if (error) {
+        if (error.code !== "23505") console.warn("Statistik kunjungan belum tercatat:", error.message);
+        return;
+      }
+      const artwork = artworks.find(item => String(item.id) === String(id));
+      if (artwork) artwork.view_count = Number(artwork.view_count || 0) + 1;
+      render();
+      refreshAdminStats();
+    } catch (error) {
+      console.warn("Statistik kunjungan tidak tersedia:", error);
+    }
+  }
+
+  async function shareArtwork(id) {
+    const artwork = artworks.find(item => String(item.id) === String(id));
+    if (!artwork) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("karya", String(id));
+    const shareData = { title: artwork.title || "Karya KOMSI", text: "Lihat karya di KOMSI RUPA LIBRARY", url: url.toString() };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.url);
+        showDeleteMessage("Tautan karya berhasil disalin.", true);
+      } else window.prompt("Salin tautan karya ini:", shareData.url);
+    } catch (error) {
+      if (error?.name !== "AbortError") showDeleteMessage("Tautan belum dapat dibagikan. Silakan coba lagi.");
+    }
+  }
+
+  async function refreshAdminStats() {
+    const panel = $("#adminStats");
+    if (!panel || !supabase || !currentUser) return;
+    try {
+      const { data, error, count } = await supabase.from(TABLE)
+        .select("id,title,view_count", { count: "exact" })
+        .order("view_count", { ascending: false }).limit(1000);
+      if (error) throw error;
+      const rows = data || [];
+      const totalViews = rows.reduce((sum, row) => sum + Number(row.view_count || 0), 0);
+      const top = rows.filter(row => Number(row.view_count || 0) > 0).slice(0, 3);
+      panel.innerHTML = `<div class="admin-stat-grid">
+        <div><strong>${Number(count || 0).toLocaleString("id-ID")}</strong><span>Total karya</span></div>
+        <div><strong>${totalViews.toLocaleString("id-ID")}</strong><span>Total dilihat</span></div>
+      </div><div class="admin-stat-top"><b>Karya paling sering dilihat</b>${top.length
+        ? `<ol>${top.map(row => `<li>${escapeHtml(row.title)} <span>${Number(row.view_count || 0).toLocaleString("id-ID")}×</span></li>`).join("")}</ol>`
+        : "<p>Belum ada data kunjungan.</p>"}</div>`;
+    } catch (error) {
+      panel.textContent = "Statistik belum dapat dimuat: " + getErrorMessage(error);
+    }
   }
 
   function toggleFavorite(id) {
@@ -146,8 +221,9 @@
     const media = preview
       ? (isVideo(a) && !a.preview_url ? `<div class="video-placeholder">▶ Video</div>` : isVideo(a) ? `<video src="${escapeHtml(a.file_url)}" controls playsinline></video>` : `<img src="${escapeHtml(preview)}" alt="${escapeHtml(a.title)}">`)
       : `<div class="video-placeholder">Preview belum tersedia</div>`;
-    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <b>${escapeHtml(a.creator || "Tidak dicantumkan")}</b></p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button>${currentUser && !a.is_demo ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
+    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <b>${escapeHtml(a.creator || "Tidak dicantumkan")}</b></p><p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
     $("#detailDialog")?.showModal();
+    if (!a.is_demo) recordArtworkView(a.id);
   }
 
   function getErrorMessage(error) {
@@ -190,6 +266,7 @@
       $("#uploadPanel").hidden = false;
       $("#loginForm").hidden = true;
       showMessage("Berhasil masuk. Kamu dapat mengunggah karya.", true);
+      refreshAdminStats();
     } catch (error) {
       console.error("Login admin gagal:", error);
       showMessage("Login gagal: " + getErrorMessage(error));
@@ -233,11 +310,13 @@
       /* Menggunakan kolom inti yang ada pada skema awal: title, description,
          category, image_url, file_url, file_name, file_size, created_by.
          preview_url/creator/mime_type/uploaded_by tidak diasumsikan tersedia. */
+      const tags = ($("#artTags")?.value || "").split(",").map(tag => tag.trim()).filter(Boolean).slice(0, 20);
       const record = {
         title: $("#artTitle").value.trim(),
         description: $("#artDescription").value.trim(),
         category: $("#artCategory").value,
         creator: $("#artCreator")?.value.trim() || "",
+        tags,
         image_url: previewUrl,
         file_url: fileUrl,
         file_name: file.name,
@@ -255,6 +334,7 @@
       showMessage("Karya berhasil diunggah ke library.", true);
       $("#uploadForm").reset();
       await loadArtworks();
+      refreshAdminStats();
     } catch (error) {
       console.error("Upload karya gagal:", error);
       showMessage("Gagal mengunggah: " + getErrorMessage(error) + " Periksa kebijakan Storage, izin tabel artworks, dan nama bucket.");
@@ -326,6 +406,7 @@
       try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
       if (button) { button.disabled = true; button.textContent = "Terhapus"; }
       await loadArtworks();
+      refreshAdminStats();
       showDeleteMessage("Karya berhasil dihapus dari katalog." + storageWarning, !storageWarning);
     } catch (error) {
       console.error("Hapus karya gagal:", error);
@@ -367,7 +448,11 @@
       const button = event.target.closest("[data-category]");
       if (!button) return;
       activeCategory = button.dataset.category;
-      document.querySelectorAll(".category").forEach(el => el.classList.toggle("active", el === button));
+      document.querySelectorAll("#categories [data-category]").forEach(el => {
+        const active = el === button;
+        el.classList.toggle("active", active);
+        el.setAttribute("aria-pressed", String(active));
+      });
       render();
     });
     $("#artGrid")?.addEventListener("click", event => {
@@ -379,8 +464,9 @@
     $("#favoritesToggle")?.addEventListener("click", () => {
       favoritesOnly = !favoritesOnly;
       $("#favoritesToggle").style.fontWeight = favoritesOnly ? "700" : "400";
+      $("#favoritesToggle").setAttribute("aria-pressed", String(favoritesOnly));
       $("#favoritesToggle").innerHTML = `${favoritesOnly ? "♥" : "♡"} Favorit <span id="favoriteCount">${favorites.size}</span>`;
-      $("#library")?.scrollIntoView({ behavior: "smooth" });
+      $("#koleksi")?.scrollIntoView({ behavior: "smooth" });
       render();
     });
     $("#adminOpen")?.addEventListener("click", () => $("#adminDialog")?.showModal());
@@ -391,7 +477,9 @@
       const favoriteButton = event.target.closest("[data-detail-favorite]");
       if (favoriteButton) { toggleFavorite(favoriteButton.dataset.detailFavorite); openDetail(favoriteButton.dataset.detailFavorite); return; }
       const deleteButton = event.target.closest("[data-delete-artwork]");
-      if (deleteButton) { event.preventDefault(); event.stopPropagation(); deleteArtwork(deleteButton.dataset.deleteArtwork); }
+      if (deleteButton) { event.preventDefault(); event.stopPropagation(); deleteArtwork(deleteButton.dataset.deleteArtwork); return; }
+      const shareButton = event.target.closest("[data-share-artwork]");
+      if (shareButton) { event.preventDefault(); event.stopPropagation(); shareArtwork(shareButton.dataset.shareArtwork); }
     });
     $("#loginForm")?.addEventListener("submit", loginAdmin);
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
@@ -408,7 +496,10 @@
       }).catch(error => console.warn("Pemeriksaan sesi gagal:", error));
     }
 
-    loadArtworks();
+    loadArtworks().then(() => {
+      const sharedArtworkId = new URLSearchParams(window.location.search).get("karya");
+      if (sharedArtworkId) openDetail(sharedArtworkId);
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
