@@ -52,6 +52,17 @@
     el.hidden = false;
   }
 
+  function showDeleteMessage(message, success = false) {
+    const el = $("#detailMessage");
+    if (!el) {
+      showMessage(message, success);
+      return;
+    }
+    el.textContent = message;
+    el.style.color = success ? "#4e7812" : "#a04b38";
+    el.hidden = false;
+  }
+
   function normalizeArtwork(row) {
     const preview = row.preview_url || row.image_url || row.file_url || "";
     return {
@@ -126,6 +137,11 @@
   function openDetail(id) {
     const a = artworks.find(x => String(x.id) === String(id));
     if (!a) return;
+    const deleteMessage = $("#detailMessage");
+    if (deleteMessage) {
+      deleteMessage.textContent = "";
+      deleteMessage.hidden = true;
+    }
     const preview = a.preview_url || a.image_url || a.file_url;
     const media = preview
       ? (isVideo(a) && !a.preview_url ? `<div class="video-placeholder">▶ Video</div>` : isVideo(a) ? `<video src="${escapeHtml(a.file_url)}" controls playsinline></video>` : `<img src="${escapeHtml(preview)}" alt="${escapeHtml(a.title)}">`)
@@ -260,7 +276,7 @@
 
   async function deleteArtwork(id) {
     if (!supabase || !currentUser) {
-      showMessage("Masuk sebagai admin untuk menghapus karya.");
+      showDeleteMessage("Masuk sebagai admin untuk menghapus karya.");
       return;
     }
     const artwork = artworks.find(item => String(item.id) === String(id));
@@ -271,39 +287,52 @@
     const button = document.querySelector(`[data-delete-artwork="${CSS.escape(String(id))}"]`);
     if (button) { button.disabled = true; button.textContent = "Menghapus…"; }
     try {
-      // Hanya hapus record yang dipilih; RLS Supabase tetap wajib membatasi admin.
+      // SELECT hanya memakai kolom inti yang diperlukan; preview_url tidak diwajibkan.
       const { data: rows, error: readError } = await supabase.from(TABLE)
         .select("id,image_url,file_url")
         .eq("id", id).limit(1);
       if (readError) throw readError;
-      if (!rows || rows.length === 0) throw new Error("Karya tidak ditemukan atau akses ditolak.");
+      if (!rows || rows.length === 0) {
+        throw new Error("Karya tidak ditemukan atau tidak dapat dibaca oleh akun ini.");
+      }
 
-      const { error: deleteError } = await supabase.from(TABLE).delete().eq("id", id);
+      // Minta representation agar RLS/no-op DELETE tidak dianggap berhasil.
+      const { data: deletedRows, error: deleteError } = await supabase.from(TABLE)
+        .delete().eq("id", id).select("id");
       if (deleteError) throw deleteError;
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error("Tidak ada baris yang terhapus. Periksa policy DELETE tabel artworks dan akun admin.");
+      }
 
       const row = rows[0];
       const paths = [...new Set([row.file_url, row.image_url]
         .map(storagePathFromPublicUrl).filter(Boolean))];
       let storageWarning = "";
       if (paths.length) {
-        const { error: storageError } = await supabase.storage.from(STORAGE_BUCKET).remove(paths);
-        if (storageError) {
-          console.error("Record terhapus tetapi file Storage gagal dihapus:", storageError);
-          storageWarning = " Data karya terhapus, tetapi file di Storage belum berhasil dibersihkan. Periksa kebijakan Storage.";
+        try {
+          const { data: removedFiles, error: storageError } =
+            await supabase.storage.from(STORAGE_BUCKET).remove(paths);
+          if (storageError) throw storageError;
+          if (!Array.isArray(removedFiles) || removedFiles.length < paths.length) {
+            storageWarning = " Data karya sudah terhapus, tetapi Storage tidak mengonfirmasi penghapusan semua file. Periksa bucket dan policy Storage.";
+          }
+        } catch (storageError) {
+          console.error("Record terhapus tetapi file Storage gagal dibersihkan:", storageError);
+          storageWarning = " Data karya sudah terhapus, tetapi file Storage belum berhasil dibersihkan. Periksa bucket dan policy Storage.";
         }
       }
+
       favorites.delete(String(id));
       try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
-      $("#detailDialog")?.close();
+      if (button) { button.disabled = true; button.textContent = "Terhapus"; }
       await loadArtworks();
-      showMessage("Karya berhasil dihapus." + storageWarning, !storageWarning);
+      showDeleteMessage("Karya berhasil dihapus dari katalog." + storageWarning, !storageWarning);
     } catch (error) {
       console.error("Hapus karya gagal:", error);
-      showMessage("Gagal menghapus karya: " + getErrorMessage(error) + " Pastikan policy DELETE tabel artworks dan policy Storage mengizinkan admin.");
+      showDeleteMessage("Gagal menghapus karya: " + getErrorMessage(error) + " Pastikan policy DELETE tabel artworks mengizinkan akun admin.");
       if (button) { button.disabled = false; button.textContent = "Hapus karya"; }
     }
   }
-
   async function logoutAdmin() {
     try { if (supabase) await supabase.auth.signOut(); }
     catch (error) { console.error("Logout gagal:", error); }
