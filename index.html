@@ -130,6 +130,7 @@
         <label for="profileBio">Bio singkat</label><textarea id="profileBio" rows="2" maxlength="240"></textarea>
         <button type="submit" class="secondary-button">Simpan profil</button><p id="profileMessage" class="form-message" role="status"></p>
       </form>
+      <div class="member-profile-visit-strip"><div><strong id="myProfileVisitCount">0</strong><span>Kunjungan profil saya</span></div><div><button type="button" class="secondary-button" id="profileShareButton">Bagikan profil ↗</button><p id="profileShareMessage" class="form-message" role="status"></p></div></div>
       <form id="securityForm" class="profile-form member-security-form">
         <div class="member-section-heading"><div><p class="section-kicker">KEAMANAN AKUN</p><h3 class="member-section-title">Ubah kata sandi</h3><p class="member-form-intro">Gunakan kata sandi baru yang kuat dan tidak dipakai di akun lain.</p></div></div>
         <label for="newMemberPassword">Kata sandi baru</label>
@@ -173,6 +174,11 @@
     <button type="button" class="icon-button detail-close" data-close-dialog="detailDialog" aria-label="Tutup">×</button>
     <p id="detailMessage" class="form-message" role="status" hidden></p>
     <div id="detailContent"></div>
+  </dialog>
+
+  <dialog class="dialog public-profile-dialog" id="profileDialog">
+    <button type="button" class="icon-button detail-close" data-close-dialog="profileDialog" aria-label="Tutup">×</button>
+    <div id="publicProfileContent"><p class="dashboard-empty">Memuat profil anggota…</p></div>
   </dialog>
 
   <dialog class="dialog" id="infoDialog">
