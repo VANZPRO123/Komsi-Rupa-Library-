@@ -13,7 +13,7 @@
       document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script defer src="app.js?v=20261114-phase1"></script>
+  <script defer src="app.js?v=20261114-phase1b"></script>
 </head>
 <body>
   <header class="site-header">
@@ -74,12 +74,12 @@
       </div>
 
       <div class="category-list" id="categories" aria-label="Filter kategori">
-        <button class="category-chip active" type="button" data-category="Semua karya">Semua karya</button>
-        <button class="category-chip" type="button" data-category="Desain">Desain</button>
-        <button class="category-chip" type="button" data-category="Ilustrasi">Ilustrasi</button>
-        <button class="category-chip" type="button" data-category="Fotografi">Fotografi</button>
-        <button class="category-chip" type="button" data-category="Artwork">Artwork</button>
-        <button class="category-chip" type="button" data-category="Video">Video</button>
+        <button class="category-chip active" type="button" data-category="Semua karya" aria-pressed="true">Semua karya</button>
+        <button class="category-chip" type="button" data-category="Desain" aria-pressed="false">Desain</button>
+        <button class="category-chip" type="button" data-category="Ilustrasi" aria-pressed="false">Ilustrasi</button>
+        <button class="category-chip" type="button" data-category="Fotografi" aria-pressed="false">Fotografi</button>
+        <button class="category-chip" type="button" data-category="Artwork" aria-pressed="false">Artwork</button>
+        <button class="category-chip" type="button" data-category="Video" aria-pressed="false">Video</button>
       </div>
 
       <div class="notice" id="notice" role="status">Menghubungkan ke katalog KOMSI RUPA LIBRARY...</div>
