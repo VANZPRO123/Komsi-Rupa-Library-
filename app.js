@@ -39,6 +39,7 @@
   let activeCreator = "";
   let currentUser = null;
   let currentProfile = null;
+  let selectedAvatarPreviewUrl = "";
   const ADMIN_USER_ID = "b520cf6e-be06-4338-976d-8604877fd632";
   let favorites = new Set();
   try {
@@ -367,6 +368,8 @@
       renderMemberAvatar(avatar_url, display_name);
       $("#artCreator").value = display_name;
       $("#profileAvatarFile").value = "";
+      if (selectedAvatarPreviewUrl) URL.revokeObjectURL(selectedAvatarPreviewUrl);
+      selectedAvatarPreviewUrl = "";
       message.textContent = "Profil berhasil disimpan.";
       message.style.color = "#4e7812";
       if (uploadedPath && previousAvatar.includes(`/storage/v1/object/public/${STORAGE_BUCKET}/`)) {
@@ -863,6 +866,29 @@
     $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
     $("#profileForm")?.addEventListener("submit", saveMemberProfile);
+    $("#profileAvatarFile")?.addEventListener("change", (event) => {
+      const file = event.target.files?.[0];
+      const message = $("#profileMessage");
+      if (!file) return;
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 3 * 1024 * 1024) {
+        event.target.value = "";
+        if (selectedAvatarPreviewUrl) URL.revokeObjectURL(selectedAvatarPreviewUrl);
+        selectedAvatarPreviewUrl = "";
+        renderMemberAvatar(currentProfile?.avatar_url || "", currentProfile?.display_name || "");
+        if (message) {
+          message.textContent = "Foto harus JPG, PNG, atau WebP dan berukuran maksimal 3 MB.";
+          message.style.color = "#a04b38";
+        }
+        return;
+      }
+      if (selectedAvatarPreviewUrl) URL.revokeObjectURL(selectedAvatarPreviewUrl);
+      selectedAvatarPreviewUrl = URL.createObjectURL(file);
+      renderMemberAvatar(selectedAvatarPreviewUrl, $("#profileDisplayName")?.value || currentProfile?.display_name || "");
+      if (message) {
+        message.textContent = "Foto dipilih. Tekan Simpan profil untuk menyimpan perubahan.";
+        message.style.color = "#4e7812";
+      }
+    });
     $("#securityForm")?.addEventListener("submit", updateMemberPassword);
     $("#logoutButton")?.addEventListener("click", logoutAdmin);
 
