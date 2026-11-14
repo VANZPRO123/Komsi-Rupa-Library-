@@ -684,6 +684,40 @@
       if (button) { button.disabled = false; button.textContent = "Hapus karya"; }
     }
   }
+  async function updateMemberPassword(event) {
+    event.preventDefault();
+    const message = $("#securityMessage");
+    const password = $("#newMemberPassword")?.value || "";
+    const confirmation = $("#confirmMemberPassword")?.value || "";
+    const button = $("#securityForm button[type='submit']");
+    if (!supabase || !currentUser) {
+      message.textContent = "Sesi akun berakhir. Silakan masuk kembali.";
+      return;
+    }
+    if (password.length < 8) {
+      message.textContent = "Kata sandi minimal 8 karakter.";
+      return;
+    }
+    if (password !== confirmation) {
+      message.textContent = "Konfirmasi kata sandi belum cocok.";
+      return;
+    }
+    if (button) { button.disabled = true; button.textContent = "Memperbarui…"; }
+    message.textContent = "";
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      $("#securityForm").reset();
+      message.textContent = "Kata sandi berhasil diperbarui.";
+      message.style.color = "#4e7812";
+    } catch (error) {
+      message.textContent = "Gagal memperbarui kata sandi: " + getErrorMessage(error);
+      message.style.color = "#a04b38";
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "Perbarui kata sandi"; }
+    }
+  }
+
   async function logoutAdmin() {
     try { if (supabase) await supabase.auth.signOut(); }
     catch (error) { console.error("Logout gagal:", error); }
@@ -778,6 +812,7 @@
     $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
     $("#profileForm")?.addEventListener("submit", saveMemberProfile);
+    $("#securityForm")?.addEventListener("submit", updateMemberPassword);
     $("#logoutButton")?.addEventListener("click", logoutAdmin);
 
     if (supabase) {
