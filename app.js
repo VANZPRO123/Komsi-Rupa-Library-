@@ -195,33 +195,51 @@
   async function refreshAdminStats() {
     const panel = $("#adminStats");
     if (!panel || !supabase || !currentUser) return;
+    panel.innerHTML = '<p>Memuat statistik KOMSI RUPA LIBRARY…</p>';
     try {
-      const rows = [];
-      const pageSize = 500;
-      let offset = 0;
-      while (true) {
-        let query = supabase.from(TABLE).select("id,title,view_count");
-        if (currentUser.id !== ADMIN_USER_ID) query = query.eq("created_by", currentUser.id);
-        const { data, error } = await query
-          .order("view_count", { ascending: false })
-          .range(offset, offset + pageSize - 1);
-        if (error) throw error;
-        const page = data || [];
-        rows.push(...page);
-        if (page.length < pageSize) break;
-        offset += pageSize;
-      }
-      const totalViews = rows.reduce((sum, row) => sum + Number(row.view_count || 0), 0);
-      const top = rows.filter(row => Number(row.view_count || 0) > 0).slice(0, 3);
-      const isAdmin = currentUser.id === ADMIN_USER_ID;
-      panel.innerHTML = `<div class="admin-stat-grid">
-        <div><strong>${rows.length.toLocaleString("id-ID")}</strong><span>${isAdmin ? "Total karya library" : "Karya saya"}</span></div>
-        <div><strong>${totalViews.toLocaleString("id-ID")}</strong><span>${isAdmin ? "Total dilihat" : "Dilihat pada karya saya"}</span></div>
-      </div><div class="admin-stat-top"><b>${isAdmin ? "Karya paling sering dilihat" : "Karya saya paling sering dilihat"} </b>${top.length
-        ? `<ol>${top.map(row => `<li>${escapeHtml(row.title)} <span>${Number(row.view_count || 0).toLocaleString("id-ID")}×</span></li>`).join("")}</ol>`
-        : "<p>Belum ada data kunjungan.</p>"}</div>`;
+      const { data, error } = await supabase.rpc("get_rupa_dashboard_stats");
+      if (error) throw error;
+      const stats = data || {};
+      const isAdmin = Boolean(stats.is_admin);
+      const number = value => Number(value || 0).toLocaleString("id-ID");
+      const dateLabel = value => value
+        ? new Date(value).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+        : "Tanggal tidak tersedia";
+      const popular = Array.isArray(stats.popular) ? stats.popular : [];
+      const categories = Array.isArray(stats.categories) ? stats.categories : [];
+      const recent = Array.isArray(stats.recent) ? stats.recent : [];
+      const maxCategory = Math.max(1, ...categories.map(item => Number(item.total || 0)));
+      const metricCards = isAdmin
+        ? `<div class="admin-stat-card"><strong>${number(stats.artwork_count)}</strong><span>Total karya</span></div>
+           <div class="admin-stat-card"><strong>${number(stats.member_count)}</strong><span>Total anggota terdaftar</span></div>
+           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya</span></div>`
+        : `<div class="admin-stat-card"><strong>${number(stats.artwork_count)}</strong><span>Total karya saya</span></div>
+           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya saya</span></div>`;
+      const popularHtml = popular.length
+        ? `<ol class="dashboard-ranking">${popular.map((item, index) => `<li><span class="dashboard-rank">${index + 1}</span><span class="dashboard-item-name">${escapeHtml(item.title || "Tanpa judul")}</span><strong>${number(item.view_count)} <small>kunjungan</small></strong></li>`).join("")}</ol>`
+        : '<p class="dashboard-empty">Belum ada karya yang tercatat.</p>';
+      const categoryHtml = categories.length
+        ? `<div class="dashboard-category-list">${categories.map(item => {
+            const total = Number(item.total || 0);
+            const width = Math.round(total / maxCategory * 100);
+            return `<div class="dashboard-category"><div><span>${escapeHtml(item.category || "Tanpa kategori")}</span><strong>${number(total)} karya</strong></div><div class="dashboard-bar"><i style="width:${width}%"></i></div></div>`;
+          }).join("")}</div>`
+        : '<p class="dashboard-empty">Belum ada kategori aktif.</p>';
+      const recentHtml = recent.length
+        ? `<ul class="dashboard-recent">${recent.map(item => `<li><div><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Tanpa kategori")} · ${escapeHtml(item.creator || "Anggota KOMSI")}</span></div><time>${escapeHtml(dateLabel(item.created_at))}</time></li>`).join("")}</ul>`
+        : '<p class="dashboard-empty">Belum ada aktivitas upload.</p>';
+
+      panel.innerHTML = `<div class="dashboard-heading"><div><p class="section-kicker">RINGKASAN DATA</p><h3>${isAdmin ? "Dashboard Statistik" : "Statistik portofolio saya"}</h3></div><button type="button" class="dashboard-refresh" id="refreshDashboardStats">Perbarui ↻</button></div>
+        <div class="admin-stat-grid ${isAdmin ? "is-admin" : "is-member"}">${metricCards}</div>
+        <div class="dashboard-stat-sections">
+          <section class="dashboard-stat-section"><h4>${isAdmin ? "Karya paling populer" : "Karya saya paling populer"}</h4>${popularHtml}</section>
+          <section class="dashboard-stat-section"><h4>${isAdmin ? "Kategori paling aktif" : "Kategori karya saya"}</h4>${categoryHtml}</section>
+          <section class="dashboard-stat-section dashboard-stat-wide"><h4>${isAdmin ? "Aktivitas upload terbaru" : "Upload terbaru saya"}</h4>${recentHtml}</section>
+        </div>`;
+      $("#refreshDashboardStats")?.addEventListener("click", refreshAdminStats);
     } catch (error) {
-      panel.textContent = "Statistik belum dapat dimuat: " + getErrorMessage(error);
+      panel.innerHTML = `<p class="dashboard-error">Statistik belum dapat dimuat: ${escapeHtml(getErrorMessage(error))}</p><button type="button" class="dashboard-refresh" id="refreshDashboardStats">Coba lagi ↻</button>`;
+      $("#refreshDashboardStats")?.addEventListener("click", refreshAdminStats);
     }
   }
 
