@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="KOMSI RUPA LIBRARY — ruang arsip, referensi, dan eksplorasi visual.">
   <title>KOMSI RUPA LIBRARY</title>
-  <link rel="stylesheet" href="style.css?v=20261114-home-feed1">
+  <link rel="stylesheet" href="style.css?v=20261114-final1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     if (!window.supabase) {
       document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script defer src="app.js?v=20261114-home-feed1"></script>
+  <script defer src="app.js?v=20261114-final1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -23,6 +23,7 @@
     </a>
     <nav class="header-nav" aria-label="Navigasi utama">
       <a href="#tentang">Tentang</a>
+      <button type="button" class="notification-open" id="notificationOpen" aria-label="Buka notifikasi">♧<span class="notification-badge" id="notificationBadge" hidden>0</span></button>
       <button type="button" class="admin-link" id="adminOpen">Akun Anggota ↗</button>
     </nav>
   </header>
@@ -103,6 +104,15 @@
     <span>KOMSI RUPA LIBRARY</span>
     <span>RUANG UNTUK KARYA VISUAL</span>
   </footer>
+
+  <dialog class="dialog notification-dialog" id="notificationDialog">
+    <div class="dialog-head">
+      <div><p class="section-kicker">AKTIVITAS AKUN</p><h2>Notifikasi</h2></div>
+      <button type="button" class="icon-button" data-close="notificationDialog" aria-label="Tutup">×</button>
+    </div>
+    <div class="notification-toolbar"><span>Aktivitas terbaru</span><button type="button" class="text-button" id="markAllNotificationsRead">Tandai semua dibaca</button></div>
+    <div class="notification-list" id="notificationList"><p class="notification-empty">Masuk untuk melihat notifikasi.</p></div>
+  </dialog>
 
   <!-- Dialog admin: mempertahankan ID yang umum dipakai app.js -->
   <dialog class="dialog" id="adminDialog">
