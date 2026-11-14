@@ -650,11 +650,6 @@
     }
   }
 
-  function getProfileVisitorId() {
-    const key = "komsi-rupa-profile-visitor";
-    try { let id = localStorage.getItem(key); if (!id) { id = crypto.randomUUID(); localStorage.setItem(key, id); } return id; }
-    catch (_) { return crypto.randomUUID(); }
-  }
   async function refreshOwnProfileVisits() {
     if (!currentUser || !supabase) return;
     const target = $("#myProfileVisitCount"); if (!target) return;
@@ -680,8 +675,10 @@
       const profile = results[0].data, works = results[1].data || [];
       if (!profile) { content.innerHTML = '<p class="dashboard-empty">Profil anggota tidak ditemukan.</p>'; return; }
       if (countVisit && currentUser?.id !== profileId) {
-        const visit = await supabase.from("member_profile_visits").insert({ profile_user_id: profileId, visitor_id: getProfileVisitorId() });
-        if (visit.error && visit.error.code !== "23505") console.warn("Kunjungan profil belum tercatat:", visit.error.message);
+        const visit = await supabase.functions.invoke("record-member-profile-visit", {
+          body: { profile_user_id: profileId }
+        });
+        if (visit.error) console.warn("Kunjungan profil belum tercatat:", visit.error.message);
       }
       const count = await supabase.rpc("get_member_profile_visit_count", { p_profile_user_id: profileId });
       if (count.error) console.warn("Jumlah kunjungan profil tidak tersedia:", count.error.message);
