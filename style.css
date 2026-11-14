@@ -524,3 +524,11 @@ button { color: inherit; }
 .profile-follow-button.is-following { background:#f0f0eb; color:var(--ink); }
 .public-profile-heading { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
 .public-profile-heading h3 { margin-right:auto; }
+
+
+/* Social home feed navigation */
+.feed-tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 15px;margin-top:3px;border-bottom:1px solid var(--line)}
+.feed-tab{flex:0 0 auto;min-height:39px;padding:0 17px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:12px;font-weight:650;cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease}
+.feed-tab.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.feed-tab:focus-visible{outline:3px solid rgba(166,173,141,.45);outline-offset:2px}
+#sortSelect:disabled{opacity:.45;cursor:not-allowed}
