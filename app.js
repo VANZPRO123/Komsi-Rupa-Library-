@@ -38,6 +38,8 @@
   let favoritesOnly = false;
   let activeCreator = "";
   let currentUser = null;
+  let currentProfile = null;
+  const ADMIN_USER_ID = "b520cf6e-be06-4338-976d-8604877fd632";
   let favorites = new Set();
   try {
     favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
@@ -226,11 +228,92 @@
     render();
   }
 
-  function toggleFavorite(id) {
-    id = String(id);
-    favorites.has(id) ? favorites.delete(id) : favorites.add(id);
+  async function loadMemberFavorites() {
+    if (!supabase || !currentUser) return;
+    const { data, error } = await supabase.from("artwork_favorites").select("artwork_id").eq("user_id", currentUser.id);
+    if (error) { console.warn("Favorit akun belum dapat dimuat:", error.message); return; }
+    favorites = new Set((data || []).map(row => String(row.artwork_id)));
     try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
     render();
+  }
+
+  async function toggleFavorite(id) {
+    id = String(id);
+    const wasSaved = favorites.has(id);
+    wasSaved ? favorites.delete(id) : favorites.add(id);
+    try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
+    render();
+    if (supabase && currentUser && /^\\d+$/.test(id)) {
+      try {
+        const request = wasSaved
+          ? supabase.from("artwork_favorites").delete().eq("user_id", currentUser.id).eq("artwork_id", Number(id))
+          : supabase.from("artwork_favorites").upsert({ user_id: currentUser.id, artwork_id: Number(id) }, { onConflict: "user_id,artwork_id" });
+        const { error } = await request;
+        if (error) throw error;
+      } catch (error) {
+        wasSaved ? favorites.add(id) : favorites.delete(id);
+        render();
+        showDeleteMessage("Favorit belum tersinkron: " + getErrorMessage(error));
+      }
+    }
+  }
+
+  async function showMemberSession(user) {
+    currentUser = user;
+    $("#uploadPanel").hidden = false;
+    $("#loginForm").hidden = true;
+    $("#signupForm").hidden = true;
+    const [profile] = await Promise.all([
+      supabase.from("member_profiles").select("display_name,bio").eq("user_id", user.id).maybeSingle(),
+      loadMemberFavorites()
+    ]);
+    if (profile.error) throw profile.error;
+    currentProfile = profile.data || { display_name: user.user_metadata?.display_name || "", bio: "" };
+    $("#profileDisplayName").value = currentProfile.display_name || "";
+    $("#profileBio").value = currentProfile.bio || "";
+    $("#memberGreeting").textContent = currentProfile.display_name || "Akun anggota";
+    $("#memberEmailLabel").textContent = user.email || "";
+    if ($("#artCreator") && !$("#artCreator").value) $("#artCreator").value = currentProfile.display_name || "";
+    refreshAdminStats();
+  }
+
+  async function registerMember(event) {
+    event.preventDefault();
+    const message = $("#signupMessage"), button = $("#signupForm button[type='submit']");
+    button.disabled = true;
+    try {
+      const display_name = $("#memberName").value.trim();
+      const { data, error } = await supabase.auth.signUp({
+        email: $("#memberEmail").value.trim(),
+        password: $("#memberPassword").value,
+        options: { data: { display_name }, emailRedirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) throw error;
+      if (data.session && data.user) {
+        await showMemberSession(data.user);
+        message.textContent = "Akun berhasil dibuat. Selamat bergabung!";
+      } else {
+        message.textContent = "Pendaftaran diterima. Cek email untuk konfirmasi, lalu masuk.";
+        message.style.color = "#4e7812";
+      }
+    } catch (error) { message.textContent = "Pendaftaran gagal: " + getErrorMessage(error); }
+    finally { button.disabled = false; }
+  }
+
+  async function saveMemberProfile(event) {
+    event.preventDefault();
+    const display_name = $("#profileDisplayName").value.trim();
+    const bio = $("#profileBio").value.trim();
+    const message = $("#profileMessage");
+    try {
+      const { error } = await supabase.from("member_profiles").upsert({ user_id: currentUser.id, display_name, bio, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+      if (error) throw error;
+      currentProfile = { display_name, bio };
+      $("#memberGreeting").textContent = display_name || "Akun anggota";
+      $("#artCreator").value = display_name;
+      message.textContent = "Profil berhasil disimpan.";
+      message.style.color = "#4e7812";
+    } catch (error) { message.textContent = "Gagal menyimpan profil: " + getErrorMessage(error); }
   }
 
   function openDetail(id) {
@@ -245,7 +328,7 @@
     const media = preview
       ? (isVideo(a) && !a.preview_url ? `<div class="video-placeholder">▶ Video</div>` : isVideo(a) ? `<video src="${escapeHtml(a.file_url)}" controls playsinline></video>` : `<img src="${escapeHtml(preview)}" alt="${escapeHtml(a.title)}">`)
       : `<div class="video-placeholder">Preview belum tersedia</div>`;
-    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button></p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
+    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button></p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo && (a.created_by === currentUser.id || currentUser.id === ADMIN_USER_ID) ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
     $("#detailDialog")?.showModal();
     if (!a.is_demo) recordArtworkView(a.id);
   }
@@ -286,11 +369,8 @@
         "Waktu koneksi habis setelah 15 detik. Periksa koneksi internet dan URL Supabase."
       );
       if (result.error) throw result.error;
-      currentUser = result.data.user;
-      $("#uploadPanel").hidden = false;
-      $("#loginForm").hidden = true;
-      showMessage("Berhasil masuk. Kamu dapat mengunggah karya.", true);
-      refreshAdminStats();
+      await showMemberSession(result.data.user);
+      showMessage("Berhasil masuk. Selamat datang di KOMSI RUPA LIBRARY.", true);
     } catch (error) {
       console.error("Login admin gagal:", error);
       showMessage("Login gagal: " + getErrorMessage(error));
@@ -346,7 +426,8 @@
         file_url: fileUrl,
         file_name: file.name,
         file_size: file.size,
-        created_by: currentUser.id
+        created_by: currentUser.id,
+        uploaded_by: currentUser.id
       };
       const { error: insertError } = await supabase.from(TABLE).insert(record);
       if (insertError) {
@@ -402,8 +483,9 @@
       }
 
       // Minta representation agar RLS/no-op DELETE tidak dianggap berhasil.
-      const { data: deletedRows, error: deleteError } = await supabase.from(TABLE)
-        .delete().eq("id", id).select("id");
+      let deleteQuery = supabase.from(TABLE).delete().eq("id", id);
+      if (currentUser.id !== ADMIN_USER_ID) deleteQuery = deleteQuery.eq("id", id).eq("created_by", currentUser.id);
+      const { data: deletedRows, error: deleteError } = await deleteQuery.select("id");
       if (deleteError) throw deleteError;
       if (!deletedRows || deletedRows.length === 0) {
         throw new Error("Tidak ada baris yang terhapus. Periksa policy DELETE tabel artworks dan akun admin.");
@@ -512,17 +594,19 @@
       if (shareButton) { event.preventDefault(); event.stopPropagation(); shareArtwork(shareButton.dataset.shareArtwork); }
     });
     $("#loginForm")?.addEventListener("submit", loginAdmin);
+    $("#signupForm")?.addEventListener("submit", registerMember);
+    $("#profileForm")?.addEventListener("submit", saveMemberProfile);
+    $("#showSignup")?.addEventListener("click", () => { $("#loginForm").hidden = true; $("#signupForm").hidden = false; });
+    $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
+    $("#profileForm")?.addEventListener("submit", saveMemberProfile);
     $("#logoutButton")?.addEventListener("click", logoutAdmin);
 
     if (supabase) {
       supabase.auth.getSession().then(({ data, error }) => {
         if (error) console.warn("Gagal memeriksa sesi:", error.message);
         if (data?.session) {
-          currentUser = data.session.user;
-          if ($("#uploadPanel")) $("#uploadPanel").hidden = false;
-          if ($("#loginForm")) $("#loginForm").hidden = true;
-          refreshAdminStats();
+          showMemberSession(data.session.user).catch(error => console.warn("Profil anggota gagal dimuat:", error));
         }
       }).catch(error => console.warn("Pemeriksaan sesi gagal:", error));
     }
