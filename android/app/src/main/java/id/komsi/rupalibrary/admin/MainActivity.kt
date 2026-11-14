@@ -33,7 +33,7 @@ class MainActivity : Activity() {
     private var uploadCallback: ValueCallback<Array<Uri>>? = null
 
     companion object {
-        private const val DASHBOARD_URL = "https://vanzpro123.github.io/Komsi-Rupa-Library/"
+        private const val DASHBOARD_URL = "https://vanzpro123.github.io/Komsi-Rupa-Library-/"
         private const val FILE_PICKER_REQUEST = 4102
         private val TRUSTED_HOSTS = setOf(
             "vanzpro123.github.io",
