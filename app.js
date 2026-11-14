@@ -1010,6 +1010,8 @@
       if (creatorButton) { event.preventDefault(); event.stopPropagation(); filterByCreator(creatorButton.dataset.creatorFilter); return; }
       const favoriteButton = event.target.closest("[data-favorite]");
       if (favoriteButton) { event.stopPropagation(); toggleFavorite(favoriteButton.dataset.favorite); return; }
+      const likeButton = event.target.closest("[data-like]");
+      if (likeButton) { event.stopPropagation(); toggleArtworkLike(likeButton.dataset.like); return; }
       const card = event.target.closest("[data-open]");
       if (card) openDetail(card.dataset.open);
     });
@@ -1046,6 +1048,10 @@
       if (creatorButton && !$("#artGrid")?.contains(creatorButton)) { event.preventDefault(); event.stopPropagation(); $("#detailDialog")?.close(); filterByCreator(creatorButton.dataset.creatorFilter); return; }
       const favoriteButton = event.target.closest("[data-detail-favorite]");
       if (favoriteButton) { toggleFavorite(favoriteButton.dataset.detailFavorite); openDetail(favoriteButton.dataset.detailFavorite); return; }
+      const likeButton = event.target.closest("[data-detail-like]");
+      if (likeButton) { toggleArtworkLike(likeButton.dataset.detailLike); return; }
+      const deleteCommentButton = event.target.closest("[data-delete-comment]");
+      if (deleteCommentButton) { deleteArtworkComment(deleteCommentButton.dataset.deleteComment); return; }
       const editButton = event.target.closest("[data-edit-artwork]");
       if (editButton) { event.preventDefault(); event.stopPropagation(); openArtworkEditor(editButton.dataset.editArtwork); return; }
       const deleteButton = event.target.closest("[data-delete-artwork]");
@@ -1058,6 +1064,7 @@
     $("#showSignup")?.addEventListener("click", () => { $("#loginForm").hidden = true; $("#signupForm").hidden = false; });
     $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
+    $("#detailContent")?.addEventListener("submit", event => { if (event.target.matches("#detailCommentForm")) submitArtworkComment(event); });
     $("#profileForm")?.addEventListener("submit", saveMemberProfile);
     $("#profileAvatarFile")?.addEventListener("change", (event) => {
       const file = event.target.files?.[0];
@@ -1095,6 +1102,7 @@
     }
 
     loadArtworks().then(() => {
+      loadSocialData();
       const params = new URLSearchParams(window.location.search);
       const sharedArtworkId = params.get("karya"), sharedProfileId = params.get("profil");
       if (sharedArtworkId) openDetail(sharedArtworkId);
