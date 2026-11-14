@@ -49,6 +49,8 @@
   let artworkCommentCounts = new Map();
   let followingMembers = new Set();
   let notificationItems = [];
+  let notificationProfiles = new Map();
+  let notificationFilter = "all";
   try {
     favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
   } catch (_) {
@@ -297,37 +299,99 @@
     return actor + " mulai mengikuti kamu.";
   }
 
-  async function loadNotifications() {
-    const list = $("#notificationList"), badge = $("#notificationBadge");
-    if (!supabase || !currentUser) {
-      notificationItems = [];
-      if (badge) { badge.hidden = true; badge.textContent = "0"; }
-      if (list) list.innerHTML = '<p class="notification-empty">Masuk untuk melihat notifikasi.</p>';
+  function notificationKind(type) {
+    if (type === "like") return { icon: "♥", label: "Suka", tone: "like" };
+    if (type === "comment") return { icon: "▤", label: "Komentar", tone: "comment" };
+    if (type === "reply") return { icon: "↩", label: "Balasan", tone: "reply" };
+    return { icon: "＋", label: "Pengikut", tone: "follow" };
+  }
+
+  function notificationTime(value) {
+    const date = new Date(value);
+    const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+    if (seconds < 60) return "Baru saja";
+    if (seconds < 3600) return Math.floor(seconds / 60) + " menit lalu";
+    if (seconds < 86400) return Math.floor(seconds / 3600) + " jam lalu";
+    if (seconds < 172800) return "Kemarin";
+    if (seconds < 604800) return Math.floor(seconds / 86400) + " hari lalu";
+    return prettyDate(value);
+  }
+
+  function notificationGroupLabel(value) {
+    const date = new Date(value);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    const sameDay = (a,b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    if (sameDay(date,today)) return "HARI INI";
+    if (sameDay(date,yesterday)) return "KEMARIN";
+    return date.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}).toUpperCase();
+  }
+
+  function renderNotifications() {
+    const list = $("#notificationList");
+    const badge = $("#notificationBadge");
+    const unreadCount = notificationItems.filter(item => !item.is_read).length;
+    if (badge) {
+      badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+      badge.hidden = unreadCount === 0;
+    }
+    if ($("#notificationUnreadCount")) $("#notificationUnreadCount").textContent = unreadCount ? unreadCount + " belum dibaca" : "Kamu sudah mengikuti semua aktivitas";
+    if ($("#notificationUnreadTabCount")) $("#notificationUnreadTabCount").textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+    document.querySelectorAll("[data-notification-filter]").forEach(button => {
+      const active = button.dataset.notificationFilter === notificationFilter;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    if (!list) return;
+    const visible = notificationItems.filter(item => notificationFilter !== "unread" || !item.is_read);
+    if (!visible.length) {
+      list.innerHTML = notificationItems.length
+        ? '<div class="notification-blank"><span class="notification-blank-icon">✓</span><strong>Semua sudah terbaca</strong><p>Tidak ada notifikasi yang menunggu untuk dibaca.</p></div>'
+        : '<div class="notification-blank"><span class="notification-blank-icon">♧</span><strong>Belum ada aktivitas</strong><p>Saat ada yang menyukai karya, berkomentar, atau mengikuti profilmu, notifikasinya akan muncul di sini.</p></div>';
       return;
     }
-    if (list) list.innerHTML = '<p class="notification-empty">Memuat notifikasi…</p>';
+    let previousGroup = "";
+    list.innerHTML = visible.map(item => {
+      const profile = notificationProfiles.get(item.actor_id) || {};
+      const name = profile.display_name || "Anggota KOMSI";
+      const kind = notificationKind(item.notification_type);
+      const group = notificationGroupLabel(item.created_at);
+      const avatar = profile.avatar_url
+        ? '<img src="' + escapeHtml(profile.avatar_url) + '" alt="" loading="lazy">'
+        : '<span>' + escapeHtml((name.trim().charAt(0) || "K").toUpperCase()) + '</span>';
+      const heading = group !== previousGroup ? '<div class="notification-date-heading">' + group + '</div>' : "";
+      previousGroup = group;
+      return heading + '<button type="button" class="notification-item ' + (item.is_read ? "" : "unread") + '" data-notification-id="' + item.id + '">' +
+        '<span class="notification-avatar-wrap"><span class="notification-avatar">' + avatar + '</span><i class="notification-type-icon ' + kind.tone + '">' + kind.icon + '</i></span>' +
+        '<span class="notification-copy"><strong>' + escapeHtml(notificationLabel(item, name)) + '</strong><small>' + escapeHtml(notificationTime(item.created_at)) + '</small></span>' +
+        (item.is_read ? "" : '<i class="notification-unread-dot" aria-label="Belum dibaca"></i>') + '</button>';
+    }).join("");
+  }
+
+  async function loadNotifications() {
+    const list = $("#notificationList");
+    if (!supabase || !currentUser) {
+      notificationItems = [];
+      notificationProfiles = new Map();
+      if (list) list.innerHTML = '<div class="notification-blank"><span class="notification-blank-icon">♧</span><strong>Masuk untuk melihat notifikasi</strong><p>Aktivitas akunmu akan tersimpan di sini.</p></div>';
+      renderNotifications();
+      return;
+    }
+    if (list) list.innerHTML = '<p class="notification-empty">Memuat aktivitas…</p>';
     try {
       const { data, error } = await supabase.from("member_notifications")
-        .select("id,actor_id,notification_type,artwork_id,is_read,created_at")
-        .eq("recipient_id", currentUser.id).order("created_at", { ascending: false }).limit(40);
+        .select("id,actor_id,notification_type,artwork_id,comment_id,is_read,created_at")
+        .eq("recipient_id", currentUser.id).order("created_at", { ascending: false }).limit(60);
       if (error) throw error;
       notificationItems = data || [];
       const actorIds = [...new Set(notificationItems.map(item => item.actor_id).filter(Boolean))];
-      let names = new Map();
+      notificationProfiles = new Map();
       if (actorIds.length) {
-        const profiles = await supabase.from("member_profiles").select("user_id,display_name").in("user_id", actorIds);
-        if (!profiles.error) names = new Map((profiles.data || []).map(profile => [profile.user_id, profile.display_name]));
+        const profiles = await supabase.from("member_profiles").select("user_id,display_name,avatar_url").in("user_id", actorIds);
+        if (!profiles.error) notificationProfiles = new Map((profiles.data || []).map(profile => [profile.user_id, profile]));
       }
-      const unread = notificationItems.filter(item => !item.is_read).length;
-      if (badge) { badge.textContent = unread > 99 ? "99+" : String(unread); badge.hidden = unread === 0; }
-      if (list) list.innerHTML = notificationItems.length ? notificationItems.map(item => {
-        const name = names.get(item.actor_id) || "Anggota KOMSI";
-        const target = item.notification_type === "follow" ? "" : String(item.artwork_id || "");
-        return '<button type="button" class="notification-item ' + (item.is_read ? "" : "unread") + '" data-notification-id="' + item.id + '" data-notification-artwork="' + escapeHtml(target) + '">' +
-          '<span class="notification-avatar">' + escapeHtml((name.trim().charAt(0) || "K").toUpperCase()) + '</span>' +
-          '<span class="notification-copy"><strong>' + escapeHtml(notificationLabel(item, name)) + '</strong><small>' + escapeHtml(prettyDate(item.created_at)) + '</small></span>' +
-          (item.is_read ? "" : '<i class="notification-unread-dot" aria-label="Belum dibaca"></i>') + '</button>';
-      }).join("") : '<p class="notification-empty">Belum ada notifikasi. Aktivitas suka, komentar, dan pengikut baru akan muncul di sini.</p>';
+      renderNotifications();
     } catch (error) {
       if (list) list.innerHTML = '<p class="notification-empty">Notifikasi gagal dimuat: ' + escapeHtml(getErrorMessage(error)) + '</p>';
       console.warn("Notifikasi belum dapat dimuat:", error);
@@ -1193,6 +1257,12 @@
     window.addEventListener("focus", () => { if (currentUser) loadNotifications(); });
     document.addEventListener("visibilitychange", () => { if (!document.hidden && currentUser) loadNotifications(); });
     $("#notificationList")?.addEventListener("click", event => { const item = event.target.closest("[data-notification-id]"); if (item) handleNotificationClick(item); });
+    $("#notificationDialog")?.addEventListener("click", event => {
+      const filter = event.target.closest("[data-notification-filter]");
+      if (!filter) return;
+      notificationFilter = filter.dataset.notificationFilter === "unread" ? "unread" : "all";
+      renderNotifications();
+    });
     $("#markAllNotificationsRead")?.addEventListener("click", async () => {
       if (!currentUser || !supabase) return;
       const { error } = await supabase.from("member_notifications").update({ is_read: true }).eq("recipient_id", currentUser.id).eq("is_read", false);
