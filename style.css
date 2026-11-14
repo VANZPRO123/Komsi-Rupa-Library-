@@ -588,3 +588,42 @@ button { color: inherit; }
 .detail-tags { align-items:center; gap:7px; margin:12px 0; color:var(--muted); font-size:12px; }
 .detail-tag-chip { border:1px solid var(--line); border-radius:999px; padding:5px 10px; background:var(--soft); color:var(--ink); font:inherit; font-size:11px; cursor:pointer; transition:background .18s,border-color .18s,transform .18s; }
 .detail-tag-chip:hover,.detail-tag-chip:focus-visible { background:#ecece5; border-color:#b9b9ad; transform:translateY(-1px); }
+
+
+/* Notification center — refined social activity panel */
+.notification-dialog{width:min(560px,calc(100% - 24px));max-height:min(82vh,760px);padding:clamp(18px,3vw,26px);border:1px solid rgba(23,24,23,.08);border-radius:22px;box-shadow:0 24px 90px rgba(20,22,18,.18)}
+.notification-dialog::backdrop{background:rgba(20,22,18,.42);backdrop-filter:blur(4px)}
+.notification-dialog .dialog-head{align-items:flex-start;margin-bottom:4px}
+.notification-dialog .dialog-head h2{font-size:clamp(26px,5vw,34px);letter-spacing:-.065em}
+.notification-toolbar{padding:14px 0 13px;align-items:center}
+.notification-toolbar-copy{display:grid;gap:4px}
+.notification-toolbar-copy strong{font-size:12px;color:var(--ink);font-weight:700}
+.notification-toolbar-copy span{font-size:10px;color:var(--muted)}
+.notification-toolbar .text-button{font-size:10px}
+.notification-filters{display:flex;align-items:center;gap:8px;padding:13px 0 9px;border-bottom:1px solid var(--line)}
+.notification-filter{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border:1px solid transparent;border-radius:999px;background:transparent;color:#777871;font-size:11px;font-weight:600;cursor:pointer}
+.notification-filter.active{background:#f0f2e9;border-color:#e7e9df;color:var(--ink)}
+.notification-filter span{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#e1e5d7;color:#555b47;font-size:9px}
+.notification-list{max-height:min(57vh,540px);padding:2px 0 5px;overflow:auto;overscroll-behavior:contain}
+.notification-date-heading{padding:17px 5px 7px;color:#92938d;font-size:9px;font-weight:800;letter-spacing:.16em}
+.notification-item{gap:12px;padding:13px 9px;border:0;border-radius:13px;border-bottom:0;transition:background .18s ease}
+.notification-item:hover{background:#f6f7f2}
+.notification-item.unread{background:#f6f8ef}
+.notification-item.unread:hover{background:#eff2e5}
+.notification-avatar-wrap{position:relative;flex:0 0 44px;width:44px;height:44px}
+.notification-avatar{width:44px;height:44px;border-radius:50%;overflow:hidden;background:#eceee5;color:#535a43;font-size:15px}
+.notification-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.notification-type-icon{position:absolute;right:-3px;bottom:-3px;display:grid;place-items:center;width:20px;height:20px;border:2px solid #fff;border-radius:50%;font-size:10px;font-style:normal;font-weight:800}
+.notification-type-icon.like{background:#f9e6eb;color:#c34462}
+.notification-type-icon.comment{background:#e8edf8;color:#536da5}
+.notification-type-icon.reply{background:#eee9f8;color:#8060a9}
+.notification-type-icon.follow{background:#e9f1dd;color:#638a36}
+.notification-copy{gap:5px}
+.notification-copy strong{font-size:12px;line-height:1.5;font-weight:550}
+.notification-copy small{font-size:10px;color:#96978f}
+.notification-unread-dot{width:7px;height:7px;flex-basis:7px}
+.notification-blank{display:grid;justify-items:center;gap:8px;padding:44px 18px;text-align:center}
+.notification-blank-icon{display:grid;place-items:center;width:48px;height:48px;margin-bottom:4px;border:1px solid var(--line);border-radius:50%;color:#7b806d;font-size:22px}
+.notification-blank strong{font-size:13px;font-weight:700}
+.notification-blank p{max-width:270px;margin:0;color:var(--muted);font-size:11px;line-height:1.7}
+@media(max-width:520px){.notification-dialog{width:calc(100% - 16px);max-height:86vh;padding:17px 13px;border-radius:18px}.notification-list{max-height:62vh}.notification-item{padding:12px 7px}.notification-copy strong{font-size:11px}}
