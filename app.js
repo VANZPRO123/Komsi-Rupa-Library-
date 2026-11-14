@@ -51,6 +51,9 @@
   let notificationItems = [];
   let notificationProfiles = new Map();
   let notificationFilter = "all";
+  let notificationChannel = null;
+  let notificationChannelUserId = "";
+  let notificationToastTimer = null;
   try {
     favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
   } catch (_) {
@@ -290,6 +293,79 @@
     render();
   }
 
+
+  function setNotificationConnection(status) {
+    const el = $("#notificationLiveStatus");
+    if (!el) return;
+    el.classList.toggle("is-live", status === "live");
+    el.classList.toggle("is-offline", status === "offline");
+    el.innerHTML = status === "live" ? "<i></i> Live" : status === "offline" ? "<i></i> Menyambungkan ulang" : "<i></i> Menghubungkan";
+  }
+
+  function showNotificationToast(item) {
+    const profile = notificationProfiles.get(item.actor_id) || {};
+    const name = profile.display_name || "Anggota KOMSI";
+    const kind = notificationKind(item.notification_type);
+    let toast = $("#notificationToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "notificationToast";
+      toast.className = "notification-toast";
+      toast.setAttribute("role", "status");
+      toast.setAttribute("aria-live", "polite");
+      toast.innerHTML = '<span class="notification-toast-icon"></span><span class="notification-toast-copy"><strong></strong><span></span></span>';
+      document.body.appendChild(toast);
+    }
+    toast.querySelector(".notification-toast-icon").textContent = kind.icon;
+    toast.querySelector(".notification-toast-copy strong").textContent = "Notifikasi baru";
+    toast.querySelector(".notification-toast-copy span").textContent = notificationLabel(item, name);
+    toast.classList.add("visible");
+    clearTimeout(notificationToastTimer);
+    notificationToastTimer = setTimeout(() => toast.classList.remove("visible"), 4200);
+  }
+
+  async function stopNotificationRealtime() {
+    const channel = notificationChannel;
+    notificationChannel = null;
+    notificationChannelUserId = "";
+    setNotificationConnection("connecting");
+    if (channel && supabase) {
+      try { await supabase.removeChannel(channel); }
+      catch (error) { console.warn("Channel notifikasi belum terputus bersih:", error?.message || error); }
+    }
+  }
+
+  async function startNotificationRealtime(userId) {
+    if (!supabase || !userId) return;
+    if (notificationChannel && notificationChannelUserId === userId) return;
+    await stopNotificationRealtime();
+    notificationChannelUserId = userId;
+    setNotificationConnection("connecting");
+    const channel = supabase.channel("member-notifications-" + userId)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "member_notifications", filter: "recipient_id=eq." + userId }, async payload => {
+        const incoming = payload.new;
+        if (!incoming || incoming.recipient_id !== userId) return;
+        if (notificationItems.some(item => String(item.id) === String(incoming.id))) return;
+        const profileResult = incoming.actor_id ? await supabase.from("member_profiles").select("user_id,display_name,avatar_url").eq("user_id", incoming.actor_id).maybeSingle() : { data: null, error: null };
+        if (profileResult.data) notificationProfiles.set(incoming.actor_id, profileResult.data);
+        notificationItems.unshift(incoming);
+        notificationItems = notificationItems.slice(0, 60);
+        renderNotifications();
+        showNotificationToast(incoming);
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "member_notifications", filter: "recipient_id=eq." + userId }, payload => {
+        const updated = payload.new;
+        const existing = notificationItems.find(item => String(item.id) === String(updated?.id));
+        if (!existing) return;
+        existing.is_read = updated.is_read;
+        renderNotifications();
+      })
+      .subscribe((status, error) => {
+        if (status === "SUBSCRIBED") { setNotificationConnection("live"); console.info("Notifikasi real-time aktif."); }
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") { setNotificationConnection("offline"); console.warn("Koneksi notifikasi real-time terputus:", error?.message || status); }
+      }, { wait: true });
+    notificationChannel = channel;
+  }
 
   function notificationLabel(item, actorName) {
     const actor = actorName || "Anggota KOMSI";
@@ -600,6 +676,7 @@
 
   async function showMemberSession(user) {
     currentUser = user;
+    startNotificationRealtime(user.id);
     $("#uploadPanel").hidden = false;
     $("#loginForm").hidden = true;
     $("#signupForm").hidden = true;
@@ -1157,6 +1234,7 @@
   }
 
   async function logoutAdmin() {
+    await stopNotificationRealtime();
     try { if (supabase) await supabase.auth.signOut(); }
     catch (error) { console.error("Logout gagal:", error); }
     currentUser = null;
