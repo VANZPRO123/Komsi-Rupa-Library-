@@ -375,7 +375,7 @@
       console.error("Login admin gagal:", error);
       showMessage("Login gagal: " + getErrorMessage(error));
     } finally {
-      if (button) { button.disabled = false; button.textContent = "Masuk sebagai admin"; }
+      if (button) { button.disabled = false; button.textContent = "Masuk"; }
     }
   }
 
