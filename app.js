@@ -364,9 +364,14 @@
         renderNotifications();
       })
       .subscribe((status, error) => {
-        if (status === "SUBSCRIBED") { setNotificationConnection("live"); console.info("Notifikasi real-time aktif."); }
-        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") { setNotificationConnection("offline"); console.warn("Koneksi notifikasi real-time terputus:", error?.message || status); }
-      }, { wait: true });
+        if (status === "SUBSCRIBED") {
+          setNotificationConnection("live");
+          console.info("Notifikasi real-time aktif untuk akun:", userId);
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          setNotificationConnection("offline");
+          console.warn("Koneksi notifikasi real-time terputus:", error?.message || status);
+        }
+      });
     notificationChannel = channel;
   }
 
