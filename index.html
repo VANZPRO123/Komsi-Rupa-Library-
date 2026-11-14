@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="KOMSI RUPA LIBRARY — ruang arsip, referensi, dan eksplorasi visual.">
   <title>KOMSI RUPA LIBRARY</title>
-  <link rel="stylesheet" href="style.css?v=20261115-notification-center2">
+  <link rel="stylesheet" href="style.css?v=20261115-notification-realtime3">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     if (!window.supabase) {
       document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script defer src="app.js?v=20261115-notification-center2"></script>
+  <script defer src="app.js?v=20261115-notification-realtime3"></script>
 </head>
 <body>
   <header class="site-header">
@@ -109,7 +109,7 @@
       <div><p class="section-kicker">AKTIVITAS AKUN</p><h2>Notifikasi</h2></div>
       <button type="button" class="icon-button" data-close="notificationDialog" aria-label="Tutup">×</button>
     </div>
-    <div class="notification-toolbar"><div class="notification-toolbar-copy"><strong>Aktivitas terbaru</strong><span id="notificationUnreadCount">Notifikasi kamu</span></div><button type="button" class="text-button" id="markAllNotificationsRead">Tandai semua dibaca</button></div>
+    <div class="notification-toolbar"><div class="notification-toolbar-copy"><strong>Aktivitas terbaru</strong><span id="notificationUnreadCount">Notifikasi kamu</span><span class="notification-live-status" id="notificationLiveStatus"><i></i> Menghubungkan</span></div><button type="button" class="text-button" id="markAllNotificationsRead">Tandai semua dibaca</button></div>
     <div class="notification-filters" role="tablist" aria-label="Filter notifikasi">
       <button type="button" class="notification-filter active" data-notification-filter="all" aria-pressed="true">Semua</button>
       <button type="button" class="notification-filter" data-notification-filter="unread" aria-pressed="false">Belum dibaca <span id="notificationUnreadTabCount">0</span></button>
