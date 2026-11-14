@@ -492,7 +492,7 @@
       }
 
       const row = rows[0];
-      const paths = [...new Set([row.file_url, row.image_url]
+      const paths = [...new Set([row.file_url, row.image_url, row.preview_url]
         .map(storagePathFromPublicUrl).filter(Boolean))];
       let storageWarning = "";
       if (paths.length) {
