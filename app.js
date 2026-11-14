@@ -17,7 +17,7 @@
     {id:"demo-4",title:"Still Life Notes",category:"Artwork",creator:"Visual Archive",description:"Komposisi objek sehari-hari dengan tone lembut.",file_url:"https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=1000&q=85",preview_url:"https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=1000&q=85",file_name:"still-life.jpg",created_at:"2026-10-05T10:00:00Z",is_demo:true},
     {id:"demo-5",title:"Open Canvas",category:"Desain",creator:"KOMSI Studio",description:"Referensi visual untuk proyek kreatif berikutnya.",file_url:"https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=1000&q=85",preview_url:"https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=1000&q=85",file_name:"open-canvas.jpg",created_at:"2026-10-04T10:00:00Z",is_demo:true},
     {id:"demo-6",title:"Nature in Frame",category:"Fotografi",creator:"Visual Archive",description:"Fragmen alam dengan komposisi sederhana.",file_url:"https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1000&q=85",preview_url:"https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1000&q=85",file_name:"nature-frame.jpg",created_at:"2026-10-03T10:00:00Z",is_demo:true},
-    {id:"demo-7",title:"Motion Notes",category:"Video",creator:"KOMSI Studio",description:"Contoh entri kategori video.",file_url:"",preview_url:"https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=1000&q=85",file_name:"motion-notes.mp4",created_at:"2026-10-02T10:00:00Z",is_demo:true},
+    {id:"demo-7",title:"Motion Notes",category:"Artwork",creator:"KOMSI Studio",description:"Eksplorasi karya visual bergerak.",file_url:"",preview_url:"https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=1000&q=85",file_name:"motion-notes.mp4",created_at:"2026-10-02T10:00:00Z",is_demo:true},
     {id:"demo-8",title:"Poster Experiments",category:"Desain",creator:"Visual Archive",description:"Eksperimen tipografi dan tata letak poster.",file_url:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=85",preview_url:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=85",file_name:"poster-experiments.jpg",created_at:"2026-10-01T10:00:00Z",is_demo:true}
   ];
 
@@ -875,7 +875,7 @@
       <input id="editArtTitle" name="title" maxlength="160" required value="${escapeHtml(artwork.title || "")}">
       <label for="editArtCategory">Kategori</label>
       <select id="editArtCategory" name="category">
-        ${["Desain","Ilustrasi","Fotografi","Artwork","Video"].map(v => `<option value="${v}" ${artwork.category === v ? "selected" : ""}>${v}</option>`).join("")}
+        ${artwork.category === "Video" ? '<option value="Video" selected hidden>Video (kategori lama)</option>' : ""}${["Desain","Ilustrasi","Fotografi","Artwork"].map(v => `<option value="${v}" ${artwork.category === v ? "selected" : ""}>${v}</option>`).join("")}
       </select>
       <label for="editArtCreator">Nama kreator</label>
       <input id="editArtCreator" name="creator" maxlength="120" required value="${escapeHtml(artwork.creator || "")}">
