@@ -192,8 +192,9 @@
       const pageSize = 500;
       let offset = 0;
       while (true) {
-        const { data, error } = await supabase.from(TABLE)
-          .select("id,title,view_count")
+        let query = supabase.from(TABLE).select("id,title,view_count");
+        if (currentUser.id !== ADMIN_USER_ID) query = query.eq("created_by", currentUser.id);
+        const { data, error } = await query
           .order("view_count", { ascending: false })
           .range(offset, offset + pageSize - 1);
         if (error) throw error;
@@ -204,10 +205,11 @@
       }
       const totalViews = rows.reduce((sum, row) => sum + Number(row.view_count || 0), 0);
       const top = rows.filter(row => Number(row.view_count || 0) > 0).slice(0, 3);
+      const isAdmin = currentUser.id === ADMIN_USER_ID;
       panel.innerHTML = `<div class="admin-stat-grid">
-        <div><strong>${rows.length.toLocaleString("id-ID")}</strong><span>Total karya</span></div>
-        <div><strong>${totalViews.toLocaleString("id-ID")}</strong><span>Total dilihat</span></div>
-      </div><div class="admin-stat-top"><b>Karya paling sering dilihat</b>${top.length
+        <div><strong>${rows.length.toLocaleString("id-ID")}</strong><span>${isAdmin ? "Total karya library" : "Karya saya"}</span></div>
+        <div><strong>${totalViews.toLocaleString("id-ID")}</strong><span>${isAdmin ? "Total dilihat" : "Dilihat pada karya saya"}</span></div>
+      </div><div class="admin-stat-top"><b>${isAdmin ? "Karya paling sering dilihat" : "Karya saya paling sering dilihat"} </b>${top.length
         ? `<ol>${top.map(row => `<li>${escapeHtml(row.title)} <span>${Number(row.view_count || 0).toLocaleString("id-ID")}×</span></li>`).join("")}</ol>`
         : "<p>Belum ada data kunjungan.</p>"}</div>`;
     } catch (error) {
@@ -231,7 +233,7 @@
   async function loadMemberFavorites() {
     if (!supabase || !currentUser) return;
     const { data, error } = await supabase.from("artwork_favorites").select("artwork_id").eq("user_id", currentUser.id);
-    if (error) { console.warn("Favorit akun belum dapat dimuat:", error.message); return; }
+    if (error) { favorites = new Set(); render(); console.warn("Favorit akun belum dapat dimuat:", error.message); return; }
     favorites = new Set((data || []).map(row => String(row.artwork_id)));
     render();
   }
