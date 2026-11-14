@@ -319,3 +319,13 @@ button { color: inherit; }
   .collection-tools { grid-template-columns: minmax(0, 1fr) auto; }
   .favorites-toggle { grid-column: 1 / -1; justify-self: start; min-height: 40px; }
 }
+
+
+/* Media cards and interactions */
+.art-thumb { position: relative; overflow: hidden; background: var(--soft); }
+.art-type { position: absolute; top: 11px; left: 11px; z-index: 1; padding: 6px 9px; border-radius: 999px; background: rgba(255,255,255,.92); color: var(--ink); font-size: 9px; font-weight: 700; letter-spacing: .06em; }
+.favorite-button { position: absolute; top: 9px; right: 9px; z-index: 1; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(0,0,0,.08); border-radius: 50%; background: rgba(255,255,255,.94); color: var(--ink); font-size: 19px; cursor: pointer; }
+.favorite-button.saved { color: #c43e45; }
+.art-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.art-size { flex: 0 0 auto; color: var(--muted); font-size: 9px; }
+.video-placeholder { display: grid; place-items: center; min-height: 190px; aspect-ratio: 4 / 5; background: #f1f2ed; color: #777871; font-size: 13px; font-weight: 650; text-align: center; }
