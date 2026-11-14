@@ -1312,6 +1312,13 @@
       const card = event.target.closest("[data-open]");
       if (card) openDetail(card.dataset.open);
     });
+    $("#adminStats")?.addEventListener("click", event => {
+      const preview = event.target.closest("[data-open]");
+      if (preview) {
+        event.preventDefault();
+        openDetail(preview.dataset.open);
+      }
+    });
     $("#memberPortfolio")?.addEventListener("click", event => {
       const editButton = event.target.closest("[data-member-edit]");
       if (editButton) {
