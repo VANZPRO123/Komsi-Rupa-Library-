@@ -164,21 +164,19 @@
   }
 
   async function recordArtworkView(id) {
-    if (!supabase || !/^\d+$/.test(String(id))) return;
-    const visitorId = getVisitorId();
-    if (!visitorId) return;
+    if (!supabase || !/^\\d+$/.test(String(id))) return;
     try {
-      const { error } = await supabase.from("artwork_views").insert({ artwork_id: Number(id), visitor_id: visitorId });
-      if (error) {
-        if (error.code !== "23505") console.warn("Statistik kunjungan belum tercatat:", error.message);
-        return;
-      }
+      const { data, error } = await supabase.functions.invoke("record-artwork-view", {
+        body: { artwork_id: Number(id) }
+      });
+      if (error) throw error;
+      if (!data?.counted) return;
       const artwork = artworks.find(item => String(item.id) === String(id));
       if (artwork) artwork.view_count = Number(artwork.view_count || 0) + 1;
       render();
       refreshAdminStats();
     } catch (error) {
-      console.warn("Statistik kunjungan tidak tersedia:", error);
+      console.warn("Statistik kunjungan belum tercatat:", error?.message || error);
     }
   }
 
