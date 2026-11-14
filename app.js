@@ -525,8 +525,12 @@
     try { if (supabase) await supabase.auth.signOut(); }
     catch (error) { console.error("Logout gagal:", error); }
     currentUser = null;
+    currentProfile = null;
     if ($("#uploadPanel")) $("#uploadPanel").hidden = true;
     if ($("#loginForm")) $("#loginForm").hidden = false;
+    if ($("#signupForm")) $("#signupForm").hidden = true;
+    favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
+    render();
     showMessage("Kamu telah keluar.");
   }
 
@@ -595,7 +599,6 @@
     });
     $("#loginForm")?.addEventListener("submit", loginAdmin);
     $("#signupForm")?.addEventListener("submit", registerMember);
-    $("#profileForm")?.addEventListener("submit", saveMemberProfile);
     $("#showSignup")?.addEventListener("click", () => { $("#loginForm").hidden = true; $("#signupForm").hidden = false; });
     $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
