@@ -363,7 +363,7 @@ button { color: inherit; }
 .member-upload-form .dialog-submit { margin-top:8px; }
 .text-button { border:0; padding:8px 0; background:transparent; color:var(--ink); font:inherit; font-size:12px; font-weight:650; cursor:pointer; text-align:left; }
 #signupForm[hidden], #loginForm[hidden] { display:none !important; }
-.member-portfolio{display:grid;gap:10px;margin:10px 0 18px}
+.member-portfolio{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:10px 0 18px}
 .member-work-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line,#e7e7e7);border-radius:13px;background:var(--surface,#fff);min-width:0}
 .member-work-preview{width:66px;height:66px;flex:0 0 66px;overflow:hidden;border-radius:9px;background:var(--soft,#f1f1f1);display:grid;place-items:center}
 .member-work-preview img{width:100%;height:100%;display:block;object-fit:cover}
@@ -371,7 +371,7 @@ button { color: inherit; }
 .member-work-info{display:grid;gap:5px;min-width:0;flex:1}
 .member-work-item strong{font-size:13px;overflow-wrap:anywhere}
 .member-work-item span,.member-empty{font-size:12px;color:var(--muted,#777)}
-.member-work-actions{display:flex;flex-direction:column;align-items:flex-start;gap:1px;flex:0 0 auto}
+.member-work-actions{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px 12px;flex:0 0 auto}
 .member-work-item .text-button{white-space:nowrap;padding:4px 0}
 .artwork-edit-form { margin-top:20px; padding:19px; background:#fbfbf8; border-color:#e4e4dc; }
 .edit-form-heading { margin-bottom:4px; }
@@ -696,7 +696,7 @@ button, input, select, textarea { min-width:0; }
   .member-account-header { gap:10px; }
   .member-avatar-row { flex-wrap:wrap; }
   .member-profile-visit-strip { display:grid; grid-template-columns:1fr; gap:12px; }
-  .member-portfolio { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .member-portfolio { grid-template-columns:minmax(0,1fr); }
   .art-comment-form { align-items:stretch; flex-direction:column; }
   .art-comment-form button { min-height:42px; }
   .art-comments-heading { flex-wrap:wrap; }
