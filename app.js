@@ -48,6 +48,7 @@
   let artworkLikeCounts = new Map();
   let artworkCommentCounts = new Map();
   let followingMembers = new Set();
+  let notificationItems = [];
   try {
     favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
   } catch (_) {
@@ -285,6 +286,71 @@
   }
 
 
+  function notificationLabel(item, actorName) {
+    const actor = actorName || "Anggota KOMSI";
+    if (item.notification_type === "like") return actor + " menyukai karya kamu.";
+    if (item.notification_type === "comment") return actor + " mengomentari karya kamu.";
+    return actor + " mulai mengikuti kamu.";
+  }
+
+  async function loadNotifications() {
+    const list = $("#notificationList"), badge = $("#notificationBadge");
+    if (!supabase || !currentUser) {
+      notificationItems = [];
+      if (badge) { badge.hidden = true; badge.textContent = "0"; }
+      if (list) list.innerHTML = '<p class="notification-empty">Masuk untuk melihat notifikasi.</p>';
+      return;
+    }
+    if (list) list.innerHTML = '<p class="notification-empty">Memuat notifikasi…</p>';
+    try {
+      const { data, error } = await supabase.from("member_notifications")
+        .select("id,actor_id,notification_type,artwork_id,is_read,created_at")
+        .eq("recipient_id", currentUser.id).order("created_at", { ascending: false }).limit(40);
+      if (error) throw error;
+      notificationItems = data || [];
+      const actorIds = [...new Set(notificationItems.map(item => item.actor_id).filter(Boolean))];
+      let names = new Map();
+      if (actorIds.length) {
+        const profiles = await supabase.from("member_profiles").select("user_id,display_name").in("user_id", actorIds);
+        if (!profiles.error) names = new Map((profiles.data || []).map(profile => [profile.user_id, profile.display_name]));
+      }
+      const unread = notificationItems.filter(item => !item.is_read).length;
+      if (badge) { badge.textContent = unread > 99 ? "99+" : String(unread); badge.hidden = unread === 0; }
+      if (list) list.innerHTML = notificationItems.length ? notificationItems.map(item => {
+        const name = names.get(item.actor_id) || "Anggota KOMSI";
+        const target = item.notification_type === "follow" ? "" : String(item.artwork_id || "");
+        return '<button type="button" class="notification-item ' + (item.is_read ? "" : "unread") + '" data-notification-id="' + item.id + '" data-notification-artwork="' + escapeHtml(target) + '">' +
+          '<span class="notification-avatar">' + escapeHtml((name.trim().charAt(0) || "K").toUpperCase()) + '</span>' +
+          '<span class="notification-copy"><strong>' + escapeHtml(notificationLabel(item, name)) + '</strong><small>' + escapeHtml(prettyDate(item.created_at)) + '</small></span>' +
+          (item.is_read ? "" : '<i class="notification-unread-dot" aria-label="Belum dibaca"></i>') + '</button>';
+      }).join("") : '<p class="notification-empty">Belum ada notifikasi. Aktivitas suka, komentar, dan pengikut baru akan muncul di sini.</p>';
+    } catch (error) {
+      if (list) list.innerHTML = '<p class="notification-empty">Notifikasi gagal dimuat: ' + escapeHtml(getErrorMessage(error)) + '</p>';
+      console.warn("Notifikasi belum dapat dimuat:", error);
+    }
+  }
+
+  async function openNotifications() {
+    if (!currentUser) { alert("Masuk ke akun anggota untuk melihat notifikasi."); $("#adminDialog")?.showModal(); return; }
+    await loadNotifications();
+    $("#notificationDialog")?.showModal();
+  }
+
+  async function handleNotificationClick(button) {
+    const id = Number(button.dataset.notificationId);
+    const item = notificationItems.find(row => Number(row.id) === id);
+    if (!item || !currentUser) return;
+    if (!item.is_read) {
+      const { error } = await supabase.from("member_notifications").update({ is_read: true }).eq("id", id).eq("recipient_id", currentUser.id);
+      if (error) { console.warn("Status notifikasi belum berubah:", error.message); return; }
+      item.is_read = true;
+    }
+    $("#notificationDialog")?.close();
+    await loadNotifications();
+    if (item.notification_type === "follow" && item.actor_id) openMemberProfile(item.actor_id);
+    else if (item.artwork_id) openDetail(String(item.artwork_id));
+  }
+
   async function loadSocialData() {
     if (!supabase) return;
     try {
@@ -434,6 +500,7 @@
     if ($("#artCreator") && !$("#artCreator").value) $("#artCreator").value = currentProfile.display_name || "";
     refreshAdminStats();
     refreshOwnProfileVisits();
+    loadNotifications();
   }
 
   async function registerMember(event) {
@@ -979,6 +1046,8 @@
     catch (error) { console.error("Logout gagal:", error); }
     currentUser = null;
     currentProfile = null;
+    notificationItems = [];
+    loadNotifications();
     if ($("#uploadPanel")) $("#uploadPanel").hidden = true;
     if ($("#loginForm")) $("#loginForm").hidden = false;
     if ($("#signupForm")) $("#signupForm").hidden = true;
@@ -1068,6 +1137,14 @@
       render();
     });
     $("#adminOpen")?.addEventListener("click", () => $("#adminDialog")?.showModal());
+    $("#notificationOpen")?.addEventListener("click", openNotifications);
+    $("#notificationList")?.addEventListener("click", event => { const item = event.target.closest("[data-notification-id]"); if (item) handleNotificationClick(item); });
+    $("#markAllNotificationsRead")?.addEventListener("click", async () => {
+      if (!currentUser || !supabase) return;
+      const { error } = await supabase.from("member_notifications").update({ is_read: true }).eq("recipient_id", currentUser.id).eq("is_read", false);
+      if (error) { alert("Notifikasi belum dapat ditandai dibaca: " + getErrorMessage(error)); return; }
+      await loadNotifications();
+    });
     $("#profileShareButton")?.addEventListener("click", async () => { if (!currentUser) return; const url = new URL(window.location.href); url.searchParams.set("profil", currentUser.id); try { await navigator.clipboard.writeText(url.toString()); $("#profileShareMessage").textContent = "Link profil berhasil disalin."; } catch (_) { $("#profileShareMessage").textContent = url.toString(); } });
     $("#submitInfo")?.addEventListener("click", () => $("#infoDialog")?.showModal());
     document.addEventListener("click", event => {
