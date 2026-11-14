@@ -175,7 +175,7 @@
                 : `<img src="${escapeHtml(thumb)}" alt="${escapeHtml(item.title || "Pratinjau karya")}" loading="lazy">`)
             : '<div class="member-work-placeholder">KOMSI</div>';
           return `<article class="member-work-item">
-            <div class="member-work-preview">${thumbnail}</div>
+            <button type="button" class="member-work-preview" data-member-open="${escapeHtml(item.id)}" aria-label="Buka karya ${escapeHtml(item.title || "Tanpa judul")}">${thumbnail}</button>
             <div class="member-work-info"><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Visual")} · ${Number(item.view_count || 0).toLocaleString("id-ID")} dilihat</span></div>
             <div class="member-work-actions"><button type="button" class="text-button" data-member-open="${escapeHtml(item.id)}">Lihat karya ↗</button><button type="button" class="text-button" data-member-edit="${escapeHtml(item.id)}">Edit karya ✎</button></div>
           </article>`;
