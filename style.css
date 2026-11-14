@@ -337,3 +337,12 @@ button { color: inherit; }
 .creator-filter-button { padding: 0; border: 0; background: transparent; color: #777871; font: inherit; font-size: inherit; text-align: left; cursor: pointer; }
 .creator-filter-button:hover { color: var(--ink); text-decoration: underline; }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+
+/* Member accounts and personal portfolio */
+.profile-form { display:grid; gap:8px; padding:14px; margin:12px 0 20px; border:1px solid var(--line); border-radius:14px; }
+.profile-form label { font-size:11px; font-weight:650; }
+.profile-email { margin:3px 0 0; color:var(--muted); font-size:11px; }
+.member-section-title { margin:18px 0 10px; font-size:14px; }
+.text-button { border:0; padding:8px 0; background:transparent; color:var(--ink); font:inherit; font-size:12px; font-weight:650; cursor:pointer; text-align:left; }
+#signupForm[hidden], #loginForm[hidden] { display:none !important; }
