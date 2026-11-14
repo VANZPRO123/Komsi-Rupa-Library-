@@ -40,6 +40,7 @@
   let currentUser = null;
   let currentProfile = null;
   let selectedAvatarPreviewUrl = "";
+  let activePublicProfileId = "";
   const ADMIN_USER_ID = "b520cf6e-be06-4338-976d-8604877fd632";
   let favorites = new Set();
   try {
@@ -130,7 +131,8 @@
         : `<div class="video-placeholder">KOMSI<br>RUPA</div>`;
       const id = escapeHtml(a.id);
       const saved = favorites.has(String(a.id));
-      return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "KOMSI Library")}</button><p class="art-views">◉ ${Number(a.view_count || 0).toLocaleString("id-ID")} dilihat</p></div></article>`;
+      const creatorAction = a.created_by ? `data-member-profile="${escapeHtml(a.created_by)}"` : `data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}"`;
+      return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><button type="button" class="creator-filter-button" ${creatorAction}>${escapeHtml(a.creator || "KOMSI Library")} ↗</button><p class="art-views">◉ ${Number(a.view_count || 0).toLocaleString("id-ID")} dilihat</p></div></article>`;
     }).join("");
     renderMemberPortfolio();
   }
