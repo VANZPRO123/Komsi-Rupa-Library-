@@ -421,7 +421,8 @@
         const own = currentUser?.id === row.user_id;
         return '<article class="art-comment ' + (isReply ? 'art-comment-reply' : '') + '"><div class="art-comment-content"><strong>' + escapeHtml(name) + '</strong><p>' + escapeHtml(row.body) + '</p><time>' + escapeHtml(prettyDate(row.created_at)) + '</time>' +
           (!isReply && currentUser ? '<button type="button" class="text-button" data-reply-toggle="' + row.id + '">Balas</button>' : '') +
-          (own ? '<button type="button" class="text-button" data-delete-comment="' + row.id + '">Hapus</button>' : '') +
+          (own ? '<button type="button" class="text-button" data-comment-edit-toggle="' + row.id + '">Edit</button><button type="button" class="text-button" data-delete-comment="' + row.id + '">Hapus</button>' : '') +
+          (own ? '<form class="art-comment-edit-form" data-comment-edit-form="' + row.id + '" data-edit-artwork="' + Number(id) + '" hidden><textarea rows="2" maxlength="1000" required>' + escapeHtml(row.body) + '</textarea><div><button type="submit">Simpan perubahan</button><button type="button" class="text-button" data-comment-edit-cancel="' + row.id + '">Batal</button></div></form>' : '') +
           (!isReply && currentUser ? '<form class="art-reply-form" data-reply-form="' + row.id + '" data-reply-artwork="' + Number(id) + '" hidden><textarea rows="2" maxlength="1000" placeholder="Tulis balasan..."></textarea><button type="submit">Kirim balasan</button></form>' : '') +
           '</div></article>';
       };
@@ -455,6 +456,21 @@
     input.value = "";
     await loadArtworkComments(id);
     render();
+  }
+
+  async function saveArtworkCommentEdit(event) {
+    event.preventDefault();
+    if (!currentUser) return;
+    const form = event.target?.closest?.("[data-comment-edit-form]");
+    const commentId = Number(form?.dataset?.commentEditForm);
+    const artworkId = Number(form?.dataset?.editArtwork);
+    const body = form?.querySelector("textarea")?.value?.trim();
+    if (!form || !Number.isSafeInteger(commentId) || commentId <= 0 ||
+        !Number.isSafeInteger(artworkId) || artworkId <= 0 || !body) return;
+    const { error } = await supabase.from("artwork_comments")
+      .update({ body }).eq("id", commentId).eq("user_id", currentUser.id);
+    if (error) { showDeleteMessage("Komentar gagal diperbarui: " + getErrorMessage(error)); return; }
+    await loadArtworkComments(artworkId);
   }
 
   async function deleteArtworkComment(id) {
@@ -1205,6 +1221,18 @@
         if (replyForm) { replyForm.hidden = !replyForm.hidden; if (!replyForm.hidden) replyForm.querySelector("textarea")?.focus(); }
         return;
       }
+      const commentEditToggle = event.target.closest("[data-comment-edit-toggle]");
+      if (commentEditToggle) {
+        const editForm = $("#artworkComments")?.querySelector('[data-comment-edit-form="' + commentEditToggle.dataset.commentEditToggle + '"]');
+        if (editForm) { editForm.hidden = !editForm.hidden; if (!editForm.hidden) { const area = editForm.querySelector("textarea"); area?.focus(); area?.setSelectionRange(area.value.length, area.value.length); } }
+        return;
+      }
+      const commentEditCancel = event.target.closest("[data-comment-edit-cancel]");
+      if (commentEditCancel) {
+        const editForm = $("#artworkComments")?.querySelector('[data-comment-edit-form="' + commentEditCancel.dataset.commentEditCancel + '"]');
+        if (editForm) editForm.hidden = true;
+        return;
+      }
       const deleteCommentButton = event.target.closest("[data-delete-comment]");
       if (deleteCommentButton) { deleteArtworkComment(deleteCommentButton.dataset.deleteComment); return; }
       const editButton = event.target.closest("[data-edit-artwork]");
@@ -1219,7 +1247,7 @@
     $("#showSignup")?.addEventListener("click", () => { $("#loginForm").hidden = true; $("#signupForm").hidden = false; });
     $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
-    $("#detailContent")?.addEventListener("submit", event => { if (event.target.matches("#detailCommentForm, [data-reply-form]")) submitArtworkComment(event); });
+    $("#detailContent")?.addEventListener("submit", event => { if (event.target.matches("[data-comment-edit-form]")) saveArtworkCommentEdit(event); else if (event.target.matches("#detailCommentForm, [data-reply-form]")) submitArtworkComment(event); });
     $("#profileForm")?.addEventListener("submit", saveMemberProfile);
     $("#profileAvatarFile")?.addEventListener("change", (event) => {
       const file = event.target.files?.[0];
