@@ -123,16 +123,16 @@
       <button type="button" class="text-button" id="showLogin">Sudah punya akun? Masuk</button>
     </form>
     <section id="uploadPanel" class="upload-panel" hidden>
-      <div class="dialog-head"><div><h3 id="memberGreeting">Akun anggota</h3><p id="memberEmailLabel" class="profile-email"></p></div><button type="button" id="logoutButton" class="text-button">Keluar</button></div>
-      <form id="profileForm" class="profile-form">
+      <div class="dialog-head member-account-header"><div><p class="section-kicker">RUANG PERSONAL</p><h3 id="memberGreeting">Akun anggota</h3><p id="memberEmailLabel" class="profile-email"></p></div><button type="button" id="logoutButton" class="member-logout-button">Keluar ↗</button></div>
+      <form id="profileForm" class="profile-form member-profile-form">
         <label for="profileDisplayName">Nama profil</label><input id="profileDisplayName" type="text" maxlength="80" required>
         <label for="profileBio">Bio singkat</label><textarea id="profileBio" rows="2" maxlength="240"></textarea>
         <button type="submit" class="secondary-button">Simpan profil</button><p id="profileMessage" class="form-message" role="status"></p>
       </form>
-      <h3 class="member-section-title">Portofolio saya</h3>
+      <div class="member-section-heading"><div><p class="section-kicker">KOLEKSI PERSONAL</p><h3 class="member-section-title">Portofolio saya</h3></div></div>
       <div id="memberPortfolio" class="member-portfolio" aria-live="polite"></div>
       <div id="adminStats" class="admin-stats" aria-live="polite"><p>Memuat statistik katalog…</p></div>
-      <form id="uploadForm" class="form-stack">
+      <form id="uploadForm" class="form-stack member-upload-form"><div class="member-section-heading"><div><p class="section-kicker">KONTRIBUSI BARU</p><h3 class="member-section-title">Unggah karya</h3><p class="member-form-intro">Bagikan karya visualmu ke ruang kreatif KOMSI.</p></div></div>
         <label for="artTitle">Judul karya</label>
         <input id="artTitle" name="title" type="text" placeholder="Judul karya" required>
         <label for="artCategory">Kategori</label>
