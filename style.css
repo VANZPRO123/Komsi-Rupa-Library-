@@ -339,14 +339,30 @@ button { color: inherit; }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 
 
-/* Member accounts and personal portfolio */
-.profile-form { display:grid; gap:8px; padding:14px; margin:12px 0 20px; border:1px solid var(--line); border-radius:14px; }
-.profile-form label { font-size:11px; font-weight:650; }
-.profile-email { margin:3px 0 0; color:var(--muted); font-size:11px; }
-.member-section-title { margin:18px 0 10px; font-size:14px; }
+/* Member account and artwork editor */
+#adminDialog { overflow-x:hidden; overflow-y:auto; }
+#adminDialog .upload-panel { margin-top:22px; padding-top:20px; }
+.member-account-header { align-items:center; padding:2px 0 17px; border-bottom:1px solid var(--line); }
+.member-account-header .section-kicker { margin:0 0 7px; }
+.member-account-header h3 { font-size:23px; letter-spacing:-.045em; }
+.profile-email { margin:5px 0 0; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+.member-logout-button { flex:0 0 auto; border:1px solid var(--line); border-radius:999px; background:#fff; padding:9px 13px; color:var(--ink); font-size:11px; font-weight:700; cursor:pointer; }
+.profile-form { display:grid; gap:9px; padding:17px; margin:14px 0 21px; border:1px solid var(--line); border-radius:17px; background:#fbfbf8; }
+.profile-form label,.form-stack label { margin-top:5px; color:#55564f; font-size:11px; font-weight:700; letter-spacing:.01em; }
+.profile-form input:not([type=file]),.profile-form select,.profile-form textarea { width:100%; min-height:45px; padding:11px 13px; border:1px solid #e3e3dc; border-radius:11px; outline:0; background:#fff; color:var(--ink); font:inherit; font-size:13px; }
+.profile-form textarea { resize:vertical; }
+.profile-form input:focus,.profile-form select:focus,.profile-form textarea:focus,.form-stack input:focus,.form-stack select:focus,.form-stack textarea:focus { border-color:#aebc81; box-shadow:0 0 0 3px rgba(197,237,75,.15); }
+.profile-form input[type=file],.form-stack input[type=file] { width:100%; padding:10px; border:1px dashed #d6d7ce; border-radius:11px; background:#fff; font-size:11px; }
+.member-profile-form button[type=submit] { width:100%; margin-top:3px; }
+.member-section-heading { display:flex; justify-content:space-between; align-items:end; gap:12px; margin:22px 0 10px; }
+.member-section-heading .section-kicker,.edit-form-heading .section-kicker { margin:0 0 5px; }
+.member-section-title { margin:0; font-size:17px; letter-spacing:-.035em; }
+.member-form-intro { margin:5px 0 2px; color:var(--muted,#777); font-size:12px; line-height:1.6; }
+.member-upload-form { margin-top:23px; padding:18px; border:1px solid var(--line); border-radius:17px; background:#fbfbf8; }
+.member-upload-form .member-section-heading { margin:0 0 9px; }
+.member-upload-form .dialog-submit { margin-top:8px; }
 .text-button { border:0; padding:8px 0; background:transparent; color:var(--ink); font:inherit; font-size:12px; font-weight:650; cursor:pointer; text-align:left; }
 #signupForm[hidden], #loginForm[hidden] { display:none !important; }
-
 .member-portfolio{display:grid;gap:10px;margin:10px 0 18px}
 .member-work-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line,#e7e7e7);border-radius:13px;background:var(--surface,#fff);min-width:0}
 .member-work-preview{width:66px;height:66px;flex:0 0 66px;overflow:hidden;border-radius:9px;background:var(--soft,#f1f1f1);display:grid;place-items:center}
@@ -357,4 +373,20 @@ button { color: inherit; }
 .member-work-item span,.member-empty{font-size:12px;color:var(--muted,#777)}
 .member-work-actions{display:flex;flex-direction:column;align-items:flex-start;gap:1px;flex:0 0 auto}
 .member-work-item .text-button{white-space:nowrap;padding:4px 0}
-@media(max-width:520px){.member-work-item{gap:9px;padding:9px}.member-work-preview{width:56px;height:56px;flex-basis:56px}.member-work-actions .text-button{font-size:11px}}
+.artwork-edit-form { margin-top:20px; padding:19px; background:#fbfbf8; border-color:#e4e4dc; }
+.edit-form-heading { margin-bottom:4px; }
+.edit-form-heading .member-section-title { font-size:20px; }
+.edit-current-preview { display:flex; align-items:center; gap:12px; padding:10px; border:1px solid var(--line); border-radius:13px; background:#fff; color:var(--muted); font-size:11px; font-weight:650; }
+.edit-current-preview img,.edit-preview-placeholder { display:grid; width:76px; height:64px; flex:0 0 76px; object-fit:cover; border-radius:8px; background:#f0f0ec; }
+.edit-preview-placeholder { place-items:center; color:#777; font-size:10px; }
+.artwork-edit-form button[type=submit] { width:100%; min-height:45px; margin-top:6px; }
+.artwork-edit-form #cancelArtworkEdit { justify-self:center; padding:8px 16px; }
+@media(max-width:520px){
+  #adminDialog { width:calc(100% - 18px); max-height:92dvh; padding:18px; border-radius:17px; }
+  .member-work-item{gap:9px;padding:9px}
+  .member-work-preview{width:56px;height:56px;flex-basis:56px}
+  .member-work-actions .text-button{font-size:11px}
+  .profile-form,.member-upload-form{padding:14px}
+  .artwork-edit-form{padding:14px}
+  .edit-current-preview img,.edit-preview-placeholder{width:66px;height:58px;flex-basis:66px}
+}
