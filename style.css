@@ -365,7 +365,7 @@ button { color: inherit; }
 #signupForm[hidden], #loginForm[hidden] { display:none !important; }
 .member-portfolio{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:10px 0 18px}
 .member-work-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line,#e7e7e7);border-radius:13px;background:var(--surface,#fff);min-width:0}
-.member-work-preview{width:66px;height:66px;flex:0 0 66px;overflow:hidden;border-radius:9px;background:var(--soft,#f1f1f1);display:grid;place-items:center}
+.member-work-preview{width:66px;height:66px;flex:0 0 66px;overflow:hidden;padding:0;border:0;border-radius:9px;background:var(--soft,#f1f1f1);display:grid;place-items:center;cursor:pointer}
 .member-work-preview img{width:100%;height:100%;display:block;object-fit:cover}
 .member-work-placeholder{width:100%;height:100%;display:grid;place-items:center;color:var(--muted,#777);font-size:11px;font-weight:750;letter-spacing:.08em;background:linear-gradient(135deg,#ececec,#dcdcdc)}
 .member-work-info{display:grid;gap:5px;min-width:0;flex:1}
