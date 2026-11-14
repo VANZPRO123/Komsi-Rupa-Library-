@@ -519,3 +519,8 @@ button { color: inherit; }
 .art-comment-form textarea { flex:1; min-width:0; resize:vertical; padding:10px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:12px; }
 .art-comment-form button { border:0; border-radius:9px; padding:10px 15px; background:var(--ink); color:white; cursor:pointer; }
 .art-comment-form button:disabled { opacity:.45; cursor:not-allowed; }
+
+.profile-follow-button { border:0; border-radius:999px; padding:8px 16px; background:var(--ink); color:#fff; font:inherit; font-size:11px; font-weight:600; cursor:pointer; }
+.profile-follow-button.is-following { background:#f0f0eb; color:var(--ink); }
+.public-profile-heading { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.public-profile-heading h3 { margin-right:auto; }
