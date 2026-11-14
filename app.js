@@ -43,6 +43,10 @@
   let activePublicProfileId = "";
   const ADMIN_USER_ID = "b520cf6e-be06-4338-976d-8604877fd632";
   let favorites = new Set();
+  let likedArtworks = new Set();
+  let artworkLikeCounts = new Map();
+  let artworkCommentCounts = new Map();
+  let followingMembers = new Set();
   try {
     favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
   } catch (_) {
@@ -265,6 +269,102 @@
     }
     $("#koleksi")?.scrollIntoView({ behavior: "smooth" });
     render();
+  }
+
+
+  async function loadSocialData() {
+    if (!supabase) return;
+    try {
+      const [likes, comments] = await Promise.all([
+        supabase.from("artwork_likes").select("artwork_id,user_id"),
+        supabase.from("artwork_comments").select("artwork_id")
+      ]);
+      if (likes.error) throw likes.error;
+      if (comments.error) throw comments.error;
+      artworkLikeCounts = new Map(); likedArtworks = new Set(); artworkCommentCounts = new Map();
+      (likes.data || []).forEach(row => {
+        const id = String(row.artwork_id);
+        artworkLikeCounts.set(id, (artworkLikeCounts.get(id) || 0) + 1);
+        if (currentUser && row.user_id === currentUser.id) likedArtworks.add(id);
+      });
+      (comments.data || []).forEach(row => {
+        const id = String(row.artwork_id);
+        artworkCommentCounts.set(id, (artworkCommentCounts.get(id) || 0) + 1);
+      });
+      if (currentUser) {
+        const follows = await supabase.from("member_follows").select("following_id").eq("follower_id", currentUser.id);
+        if (!follows.error) followingMembers = new Set((follows.data || []).map(row => String(row.following_id)));
+      }
+      render();
+    } catch (error) { console.warn("Data sosial belum termuat:", error.message); }
+  }
+
+  async function toggleArtworkLike(id) {
+    if (!currentUser) { alert("Masuk ke akun anggota untuk menyukai karya."); return; }
+    id = String(id);
+    const wasLiked = likedArtworks.has(id);
+    const request = wasLiked
+      ? supabase.from("artwork_likes").delete().eq("user_id", currentUser.id).eq("artwork_id", Number(id))
+      : supabase.from("artwork_likes").insert({ user_id: currentUser.id, artwork_id: Number(id) });
+    const { error } = await request;
+    if (error) { showDeleteMessage("Gagal memperbarui suka: " + getErrorMessage(error)); return; }
+    wasLiked ? likedArtworks.delete(id) : likedArtworks.add(id);
+    artworkLikeCounts.set(id, Math.max(0, Number(artworkLikeCounts.get(id) || 0) + (wasLiked ? -1 : 1)));
+    render();
+    if ($("#detailDialog")?.open) openDetail(id);
+  }
+
+  async function loadArtworkComments(id) {
+    const panel = $("#artworkComments");
+    if (!panel || !supabase) return;
+    panel.innerHTML = '<p class="dashboard-empty">Memuat komentar…</p>';
+    try {
+      const result = await supabase.from("artwork_comments")
+        .select("id,body,user_id,created_at,member_profiles(display_name)")
+        .eq("artwork_id", Number(id)).order("created_at", { ascending: true }).limit(100);
+      if (result.error) throw result.error;
+      panel.innerHTML = (result.data || []).map(row => {
+        const name = row.member_profiles?.display_name || "Anggota KOMSI";
+        const own = currentUser?.id === row.user_id;
+        return '<article class="art-comment"><div><strong>' + escapeHtml(name) + '</strong><p>' + escapeHtml(row.body) + '</p><time>' + escapeHtml(prettyDate(row.created_at)) + '</time></div>' + (own ? '<button type="button" class="text-button" data-delete-comment="' + row.id + '">Hapus</button>' : '') + '</article>';
+      }).join("") || '<p class="dashboard-empty">Belum ada komentar. Jadilah yang pertama.</p>';
+    } catch (error) { panel.textContent = "Komentar gagal dimuat: " + getErrorMessage(error); }
+  }
+
+  async function submitArtworkComment(event) {
+    event.preventDefault();
+    if (!currentUser) { alert("Masuk untuk berkomentar."); return; }
+    const form = event.currentTarget, id = form.dataset.commentArtwork;
+    const input = form.querySelector("textarea"), body = input?.value.trim();
+    if (!body) return;
+    const { error } = await supabase.from("artwork_comments").insert({ artwork_id: Number(id), user_id: currentUser.id, body });
+    if (error) { showDeleteMessage("Komentar gagal dikirim: " + getErrorMessage(error)); return; }
+    artworkCommentCounts.set(String(id), Number(artworkCommentCounts.get(String(id)) || 0) + 1);
+    input.value = ""; await loadArtworkComments(id); render();
+  }
+
+  async function deleteArtworkComment(id) {
+    if (!currentUser || !confirm("Hapus komentar ini?")) return;
+    const form = $("#detailCommentForm"), artworkId = form?.dataset.commentArtwork;
+    const { error } = await supabase.from("artwork_comments").delete().eq("id", Number(id)).eq("user_id", currentUser.id);
+    if (error) { showDeleteMessage("Komentar gagal dihapus: " + getErrorMessage(error)); return; }
+    if (artworkId) {
+      artworkCommentCounts.set(String(artworkId), Math.max(0, Number(artworkCommentCounts.get(String(artworkId)) || 0) - 1));
+      await loadArtworkComments(artworkId); render();
+    }
+  }
+
+  async function toggleMemberFollow(profileId) {
+    if (!currentUser) { alert("Masuk untuk mengikuti kreator."); return; }
+    if (currentUser.id === profileId) return;
+    const wasFollowing = followingMembers.has(String(profileId));
+    const request = wasFollowing
+      ? supabase.from("member_follows").delete().eq("follower_id", currentUser.id).eq("following_id", profileId)
+      : supabase.from("member_follows").insert({ follower_id: currentUser.id, following_id: profileId });
+    const { error } = await request;
+    if (error) { showDeleteMessage("Gagal memperbarui mengikuti: " + getErrorMessage(error)); return; }
+    wasFollowing ? followingMembers.delete(String(profileId)) : followingMembers.add(String(profileId));
+    openMemberProfile(profileId, { countVisit: false, updateUrl: false });
   }
 
   async function loadMemberFavorites() {
