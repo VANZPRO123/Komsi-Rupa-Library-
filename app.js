@@ -229,14 +229,17 @@
       const categories = Array.isArray(stats.categories) ? stats.categories : [];
       const recent = Array.isArray(stats.recent) ? stats.recent : [];
       const maxCategory = Math.max(1, ...categories.map(item => Number(item.total || 0)));
+      const totalRecordedVisits = Number(stats.view_total || 0) + Number(stats.profile_visit_total || 0);
       const metricCards = isAdmin
         ? `<div class="admin-stat-card"><strong>${number(stats.artwork_count)}</strong><span>Total karya</span></div>
            <div class="admin-stat-card"><strong>${number(stats.member_count)}</strong><span>Total anggota terdaftar</span></div>
-           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya</span></div>
-           <div class="admin-stat-card"><strong>${number(stats.profile_visit_total)}</strong><span>Total kunjungan profil</span></div>`
+           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Kunjungan karya</span></div>
+           <div class="admin-stat-card"><strong>${number(stats.profile_visit_total)}</strong><span>Kunjungan profil</span></div>
+           <div class="admin-stat-card"><strong>${number(totalRecordedVisits)}</strong><span>Total kunjungan tercatat</span></div>`
         : `<div class="admin-stat-card"><strong>${number(stats.artwork_count)}</strong><span>Total karya saya</span></div>
-           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya saya</span></div>
-           <div class="admin-stat-card"><strong>${number(stats.profile_visit_total)}</strong><span>Kunjungan profil saya</span></div>`;
+           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Kunjungan karya saya</span></div>
+           <div class="admin-stat-card"><strong>${number(stats.profile_visit_total)}</strong><span>Kunjungan profil saya</span></div>
+           <div class="admin-stat-card"><strong>${number(totalRecordedVisits)}</strong><span>Total kunjungan portofolio saya</span></div>`;
       const popularHtml = popular.length
         ? `<ol class="dashboard-ranking">${popular.map((item, index) => `<li><span class="dashboard-rank">${index + 1}</span><span class="dashboard-item-name">${escapeHtml(item.title || "Tanpa judul")}</span><strong>${number(item.view_count)} <small>kunjungan</small></strong></li>`).join("")}</ol>`
         : '<p class="dashboard-empty">Belum ada karya yang tercatat.</p>';
