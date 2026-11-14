@@ -489,3 +489,18 @@ button { color: inherit; }
  .public-profile-identity h2 { font-size:19px; }
  .public-profile-works { gap:8px; }
 }
+
+/* Dashboard: profile traffic and per-member contribution */
+.admin-stat-grid.is-admin { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.admin-stat-grid.is-member { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.dashboard-member-table { width:100%; overflow-x:auto; }
+.dashboard-member-row { min-width:510px; display:grid; grid-template-columns:minmax(130px,1.6fr) repeat(3,minmax(90px,1fr)); gap:10px; align-items:center; padding:10px 8px; border-top:1px solid var(--line); font-size:10px; }
+.dashboard-member-row:first-child { border-top:0; }
+.dashboard-member-row strong { font-size:11px; overflow-wrap:anywhere; }
+.dashboard-member-row span:not(:first-child) { color:var(--muted); font-variant-numeric:tabular-nums; }
+.dashboard-member-head { color:var(--muted); font-size:9px; font-weight:600; }
+@media(max-width:520px) {
+ .admin-stat-grid.is-admin { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .admin-stat-grid.is-member { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .dashboard-member-row { min-width:480px; }
+}
