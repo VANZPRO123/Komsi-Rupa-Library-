@@ -131,6 +131,21 @@
       const saved = favorites.has(String(a.id));
       return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "KOMSI Library")}</button><p class="art-views">◉ ${Number(a.view_count || 0).toLocaleString("id-ID")} dilihat</p></div></article>`;
     }).join("");
+    renderMemberPortfolio();
+  }
+
+  function renderMemberPortfolio() {
+    const panel = $("#memberPortfolio");
+    if (!panel) return;
+    if (!currentUser) { panel.innerHTML = ""; return; }
+    const mine = artworks.filter(item => !item.is_demo && item.created_by === currentUser.id)
+      .sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    panel.innerHTML = mine.length
+      ? mine.map(item => `<article class="member-work-item">
+          <div><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Visual")} · ${Number(item.view_count || 0).toLocaleString("id-ID")} dilihat</span></div>
+          <button type="button" class="text-button" data-member-open="${escapeHtml(item.id)}">Lihat karya ↗</button>
+        </article>`).join("")
+      : '<p class="member-empty">Kamu belum mengunggah karya. Karya yang kamu unggah akan muncul di sini.</p>';
   }
 
   function getVisitorId() {
