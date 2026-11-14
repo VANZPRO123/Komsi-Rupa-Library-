@@ -36,6 +36,7 @@
   let artworks = [];
   let activeCategory = "Semua karya";
   let favoritesOnly = false;
+  let activeCreator = "";
   let currentUser = null;
   let favorites = new Set();
   try {
@@ -102,6 +103,7 @@
     const result = artworks.filter(a =>
       (activeCategory === "Semua karya" || a.category === activeCategory) &&
       (!favoritesOnly || favorites.has(String(a.id))) &&
+      (!activeCreator || a.creator === activeCreator) &&
       (!query || [a.title, a.category, a.creator, a.description, a.tags].join(" ").toLowerCase().includes(query))
     );
     if (sort === "title") result.sort((a,b) => (a.title || "").localeCompare(b.title || "", "id"));
@@ -125,7 +127,7 @@
         : `<div class="video-placeholder">KOMSI<br>RUPA</div>`;
       const id = escapeHtml(a.id);
       const saved = favorites.has(String(a.id));
-      return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><p class="art-creator">${escapeHtml(a.creator || "KOMSI Library")}</p><p class="art-views">◉ ${Number(a.view_count || 0).toLocaleString("id-ID")} dilihat</p></div></article>`;
+      return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "KOMSI Library")}</button><p class="art-views">◉ ${Number(a.view_count || 0).toLocaleString("id-ID")} dilihat</p></div></article>`;
     }).join("");
   }
 
@@ -211,6 +213,19 @@
     }
   }
 
+  function filterByCreator(name) {
+    activeCreator = String(name || "").trim();
+    const panel = $("#creatorFilter");
+    const label = $("#creatorFilterLabel");
+    if (panel) panel.hidden = !activeCreator;
+    if (label) {
+      const total = artworks.filter(item => item.creator === activeCreator).length;
+      label.textContent = activeCreator ? `Menampilkan ${total} karya dari kreator: ${activeCreator}` : "";
+    }
+    $("#koleksi")?.scrollIntoView({ behavior: "smooth" });
+    render();
+  }
+
   function toggleFavorite(id) {
     id = String(id);
     favorites.has(id) ? favorites.delete(id) : favorites.add(id);
@@ -230,7 +245,7 @@
     const media = preview
       ? (isVideo(a) && !a.preview_url ? `<div class="video-placeholder">▶ Video</div>` : isVideo(a) ? `<video src="${escapeHtml(a.file_url)}" controls playsinline></video>` : `<img src="${escapeHtml(preview)}" alt="${escapeHtml(a.title)}">`)
       : `<div class="video-placeholder">Preview belum tersedia</div>`;
-    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <b>${escapeHtml(a.creator || "Tidak dicantumkan")}</b></p><p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
+    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button></p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
     $("#detailDialog")?.showModal();
     if (!a.is_demo) recordArtworkView(a.id);
   }
@@ -466,11 +481,14 @@
       render();
     });
     $("#artGrid")?.addEventListener("click", event => {
+      const creatorButton = event.target.closest("[data-creator-filter]");
+      if (creatorButton) { event.preventDefault(); event.stopPropagation(); filterByCreator(creatorButton.dataset.creatorFilter); return; }
       const favoriteButton = event.target.closest("[data-favorite]");
       if (favoriteButton) { event.stopPropagation(); toggleFavorite(favoriteButton.dataset.favorite); return; }
       const card = event.target.closest("[data-open]");
       if (card) openDetail(card.dataset.open);
     });
+    $("#clearCreatorFilter")?.addEventListener("click", () => filterByCreator(""));
     $("#favoritesToggle")?.addEventListener("click", () => {
       favoritesOnly = !favoritesOnly;
       $("#favoritesToggle").style.fontWeight = favoritesOnly ? "700" : "400";
@@ -484,6 +502,8 @@
     document.addEventListener("click", event => {
       const closeButton = event.target.closest("[data-close]");
       if (closeButton) $("#" + closeButton.dataset.close)?.close();
+      const creatorButton = event.target.closest("[data-creator-filter]");
+      if (creatorButton && !$("#artGrid")?.contains(creatorButton)) { event.preventDefault(); event.stopPropagation(); $("#detailDialog")?.close(); filterByCreator(creatorButton.dataset.creatorFilter); return; }
       const favoriteButton = event.target.closest("[data-detail-favorite]");
       if (favoriteButton) { toggleFavorite(favoriteButton.dataset.detailFavorite); openDetail(favoriteButton.dataset.detailFavorite); return; }
       const deleteButton = event.target.closest("[data-delete-artwork]");
