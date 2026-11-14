@@ -245,8 +245,18 @@
            <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Kunjungan karya saya</span></div>
            <div class="admin-stat-card"><strong>${number(stats.profile_visit_total)}</strong><span>Kunjungan profil saya</span></div>
            <div class="admin-stat-card"><strong>${number(totalRecordedVisits)}</strong><span>Total kunjungan portofolio saya</span></div>`;
+      const artworkForStat = item => artworks.find(work => String(work.id) === String(item.id ?? item.artwork_id));
+      const dashboardPreview = (item, className = "dashboard-work-preview") => {
+        const artwork = artworkForStat(item) || item;
+        const imageUrl = artwork.preview_url || artwork.image_url || (!isVideo(artwork) ? artwork.file_url : "");
+        const id = artwork.id ?? item.id ?? item.artwork_id ?? "";
+        const media = imageUrl
+          ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.title || artwork.title || "Pratinjau karya")}" loading="lazy">`
+          : `<span>${isVideo(artwork) ? "▶" : "K"}</span>`;
+        return `<button type="button" class="${className}" data-open="${escapeHtml(id)}" aria-label="Lihat karya ${escapeHtml(item.title || artwork.title || "")}">${media}</button>`;
+      };
       const popularHtml = popular.length
-        ? `<ol class="dashboard-ranking">${popular.map((item, index) => `<li><span class="dashboard-rank">${index + 1}</span><span class="dashboard-item-name">${escapeHtml(item.title || "Tanpa judul")}</span><strong>${number(item.view_count)} <small>kunjungan</small></strong></li>`).join("")}</ol>`
+        ? `<ol class="dashboard-ranking dashboard-work-list">${popular.map((item, index) => `<li>${dashboardPreview(item)}<span class="dashboard-rank">${index + 1}</span><span class="dashboard-item-name">${escapeHtml(item.title || "Tanpa judul")}</span><strong>${number(item.view_count)} <small>kunjungan</small></strong></li>`).join("")}</ol>`
         : '<p class="dashboard-empty">Belum ada karya yang tercatat.</p>';
       const categoryHtml = categories.length
         ? `<div class="dashboard-category-list">${categories.map(item => {
@@ -256,7 +266,7 @@
           }).join("")}</div>`
         : '<p class="dashboard-empty">Belum ada kategori aktif.</p>';
       const recentHtml = recent.length
-        ? `<ul class="dashboard-recent">${recent.map(item => `<li><div><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Tanpa kategori")} · ${escapeHtml(item.creator || "Anggota KOMSI")}</span></div><time>${escapeHtml(dateLabel(item.created_at))}</time></li>`).join("")}</ul>`
+        ? `<ul class="dashboard-recent dashboard-recent-work">${recent.map(item => `<li>${dashboardPreview(item)}<div class="dashboard-recent-copy"><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Tanpa kategori")} · ${escapeHtml(item.creator || "Anggota KOMSI")}</span><time>${escapeHtml(dateLabel(item.created_at))}</time></div></li>`).join("")}</ul>`
         : '<p class="dashboard-empty">Belum ada aktivitas upload.</p>';
       const members = Array.isArray(stats.members) ? stats.members : [];
       const memberStatsHtml = isAdmin
