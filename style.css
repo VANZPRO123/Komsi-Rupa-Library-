@@ -402,3 +402,52 @@ button { color: inherit; }
 .avatar-file-label{display:inline-flex;align-items:center;justify-content:center;width:max-content;margin-top:3px;padding:8px 13px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:11px;font-weight:700;cursor:pointer}
 #profileAvatarFile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 @media(max-width:520px){.member-avatar-frame{width:66px;height:66px;flex-basis:66px}}
+
+
+/* Dashboard statistik KOMSI RUPA LIBRARY */
+.admin-stats { padding:18px; background:#fbfbf8; }
+.dashboard-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.dashboard-heading .section-kicker { margin:0 0 5px; }
+.dashboard-heading h3 { margin:0; font-size:19px; letter-spacing:-.04em; color:var(--ink); }
+.dashboard-refresh { flex:0 0 auto; padding:8px 11px; border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--ink); font:inherit; font-size:10px; font-weight:700; cursor:pointer; }
+.admin-stat-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.admin-stat-grid.is-member { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.admin-stat-grid .admin-stat-card { min-width:0; display:grid; gap:5px; padding:14px; border:1px solid #eeeee8; border-radius:12px; background:#fff; }
+.admin-stat-card strong { font-size:clamp(20px,3vw,27px); line-height:1.1; overflow-wrap:anywhere; }
+.admin-stat-card span { font-size:10px; line-height:1.45; color:var(--muted); }
+.dashboard-stat-sections { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:14px; }
+.dashboard-stat-section { min-width:0; padding:14px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+.dashboard-stat-section h4 { margin:0 0 12px; font-size:12px; letter-spacing:-.01em; color:var(--ink); }
+.dashboard-stat-wide { grid-column:1/-1; }
+.dashboard-ranking,.dashboard-recent { list-style:none; margin:0; padding:0; }
+.dashboard-ranking li { display:flex; align-items:center; gap:9px; padding:8px 0; border-top:1px solid #f0f0eb; font-size:11px; }
+.dashboard-ranking li:first-child,.dashboard-recent li:first-child { border-top:0; padding-top:0; }
+.dashboard-rank { display:grid; place-items:center; width:22px; height:22px; flex:0 0 22px; border-radius:50%; background:#f0f1e9; color:#55594b; font-size:10px; font-weight:750; }
+.dashboard-item-name { min-width:0; flex:1; overflow-wrap:anywhere; color:var(--ink); }
+.dashboard-ranking li > strong { flex:0 0 auto; font-size:10px; white-space:nowrap; }
+.dashboard-ranking small { color:var(--muted); font-size:9px; font-weight:500; }
+.dashboard-category { margin:10px 0; }
+.dashboard-category > div:first-child { display:flex; justify-content:space-between; gap:8px; margin-bottom:6px; font-size:10px; }
+.dashboard-category > div:first-child span { overflow-wrap:anywhere; }
+.dashboard-category strong { flex:0 0 auto; color:var(--muted); font-size:9px; }
+.dashboard-bar { height:6px; overflow:hidden; border-radius:999px; background:#efefe9; }
+.dashboard-bar i { display:block; height:100%; border-radius:999px; background:#a6ad8d; }
+.dashboard-recent li { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:9px 0; border-top:1px solid #f0f0eb; }
+.dashboard-recent li > div { display:grid; gap:4px; min-width:0; }
+.dashboard-recent strong { font-size:11px; overflow-wrap:anywhere; }
+.dashboard-recent span,.dashboard-recent time { color:var(--muted); font-size:9px; line-height:1.5; }
+.dashboard-recent time { flex:0 0 auto; text-align:right; }
+.dashboard-empty,.dashboard-error { margin:0; color:var(--muted); font-size:11px; line-height:1.6; }
+.dashboard-error { color:#a04b38; }
+@media(max-width:600px) {
+ .admin-stats { padding:13px; }
+ .admin-stat-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+ .admin-stat-grid.is-member { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .admin-stat-grid .admin-stat-card { padding:10px 8px; }
+ .admin-stat-card strong { font-size:19px; }
+ .admin-stat-card span { font-size:9px; }
+ .dashboard-stat-sections { grid-template-columns:1fr; gap:9px; }
+ .dashboard-stat-wide { grid-column:auto; }
+ .dashboard-recent li { gap:7px; }
+ .dashboard-recent time { max-width:100px; }
+}
