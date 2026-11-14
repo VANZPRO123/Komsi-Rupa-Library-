@@ -862,12 +862,13 @@ button, input, select, textarea { min-width:0; }
 .dashboard-work-preview {
   display:grid;
   place-items:center;
-  width:36px;
-  height:42px;
+  width:40px;
+  aspect-ratio:4 / 5;
+  height:auto;
   padding:0;
   overflow:hidden;
   border:1px solid var(--line);
-  border-radius:9px;
+  border-radius:8px;
   background:var(--soft);
   color:var(--muted);
   cursor:pointer;
@@ -890,8 +891,9 @@ button, input, select, textarea { min-width:0; }
   gap:12px;
 }
  .dashboard-recent-work .dashboard-work-preview {
-  width:40px;
-  height:46px;
+  width:42px;
+  aspect-ratio:4 / 5;
+  height:auto;
 }
 .dashboard-recent-copy {
   display:grid;
@@ -910,7 +912,7 @@ button, input, select, textarea { min-width:0; }
     grid-template-columns:32px 18px minmax(0,1fr);
     gap:8px;
   }
-   .dashboard-work-preview { width:32px; height:38px; }
+   .dashboard-work-preview { width:36px; height:auto; aspect-ratio:4 / 5; }
   .dashboard-work-list > li > strong {
     grid-column:3;
     justify-self:start;
@@ -920,5 +922,5 @@ button, input, select, textarea { min-width:0; }
     grid-template-columns:36px minmax(0,1fr);
     gap:9px;
   }
-   .dashboard-recent-work .dashboard-work-preview { width:36px; height:42px; }
+   .dashboard-recent-work .dashboard-work-preview { width:38px; height:auto; aspect-ratio:4 / 5; }
 }
