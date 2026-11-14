@@ -4,8 +4,12 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.webkit.CookieManager
@@ -31,6 +35,9 @@ class MainActivity : Activity() {
     private lateinit var progress: ProgressBar
     private lateinit var offlinePanel: LinearLayout
     private var uploadCallback: ValueCallback<Array<Uri>>? = null
+    private val lime = Color.rgb(216, 243, 106)
+    private val ink = Color.rgb(17, 19, 21)
+    private val handler = Handler(Looper.getMainLooper())
 
     companion object {
         private const val DASHBOARD_URL = "https://vanzpro123.github.io/Komsi-Rupa-Library-/"
@@ -42,13 +49,83 @@ class MainActivity : Activity() {
         )
     }
 
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    private fun roundedBackground(color: Int, radius: Int): GradientDrawable =
+        GradientDrawable().apply { setColor(color); cornerRadius = dp(radius).toFloat() }
+
+    private fun label(text: String, size: Float, color: Int, bold: Boolean = false): TextView =
+        TextView(this).apply {
+            this.text = text
+            textSize = size
+            setTextColor(color)
+            if (bold) setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+    private fun navButton(title: String, icon: String, action: () -> Unit): TextView =
+        TextView(this).apply {
+            text = "$icon\n$title"
+            textSize = 11f
+            setTextColor(Color.rgb(220, 222, 218))
+            gravity = Gravity.CENTER
+            isClickable = true
+            isFocusable = true
+            setPadding(dp(4), dp(5), dp(4), dp(5))
+            setOnClickListener { action() }
+            layoutParams = LinearLayout.LayoutParams(0, -1, 1f)
+        }
+
+    private fun runPageAction(script: String) {
+        webView.evaluateJavascript(script, null)
+    }
+
+    private fun openDashboard() {
+        runPageAction("document.querySelector('#adminOpen')?.click();")
+        handler.postDelayed({
+            runPageAction("document.querySelector('#adminStats')?.scrollIntoView({behavior:'smooth',block:'start'});")
+        }, 650)
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.rgb(17, 19, 21)
-        window.navigationBarColor = Color.rgb(17, 19, 21)
+        window.statusBarColor = ink
+        window.navigationBarColor = ink
 
-        val root = FrameLayout(this).apply { setBackgroundColor(Color.rgb(17, 19, 21)) }
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+        }
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(18), 0, dp(16), 0)
+            setBackgroundColor(ink)
+            layoutParams = LinearLayout.LayoutParams(-1, dp(62))
+        }
+        val brand = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, -1, 1f)
+            addView(label("KOMSI RUPA", 16f, Color.WHITE, true))
+            addView(label("ADMIN LIBRARY  ·  RUANG KARYA", 9f, lime, true))
+        }
+        header.addView(brand)
+        header.addView(TextView(this).apply {
+            text = "ADMIN"
+            textSize = 10f
+            setTextColor(ink)
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(7), dp(12), dp(7))
+            background = roundedBackground(lime, 20)
+        })
+
+        val contentFrame = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(-1, 0, 1f)
+        }
         webView = WebView(this)
         progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             isIndeterminate = false
@@ -59,21 +136,22 @@ class MainActivity : Activity() {
         offlinePanel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setPadding(32, 32, 32, 32)
-            setBackgroundColor(Color.rgb(17, 19, 21))
+            setPadding(dp(32), dp(32), dp(32), dp(32))
+            setBackgroundColor(Color.WHITE)
             visibility = View.GONE
             addView(TextView(this@MainActivity).apply {
                 text = "Koneksi belum tersedia"
                 textSize = 20f
-                setTextColor(Color.WHITE)
+                setTextColor(ink)
                 gravity = Gravity.CENTER
+                setTypeface(typeface, Typeface.BOLD)
             })
             addView(TextView(this@MainActivity).apply {
                 text = "Periksa internet kamu, lalu coba muat dashboard kembali."
                 textSize = 14f
-                setTextColor(Color.LTGRAY)
+                setTextColor(Color.DKGRAY)
                 gravity = Gravity.CENTER
-                setPadding(0, 12, 0, 20)
+                setPadding(0, dp(12), 0, dp(20))
             })
             addView(Button(this@MainActivity).apply {
                 text = "Coba lagi"
@@ -83,10 +161,31 @@ class MainActivity : Activity() {
                 }
             })
         }
+        contentFrame.addView(webView, FrameLayout.LayoutParams(-1, -1))
+        contentFrame.addView(progress, FrameLayout.LayoutParams(-1, dp(3), Gravity.TOP))
+        contentFrame.addView(offlinePanel, FrameLayout.LayoutParams(-1, -1))
 
-        root.addView(webView, FrameLayout.LayoutParams(-1, -1))
-        root.addView(progress, FrameLayout.LayoutParams(-1, 4, Gravity.TOP))
-        root.addView(offlinePanel, FrameLayout.LayoutParams(-1, -1))
+        val bottomNav = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(ink)
+            setPadding(dp(5), dp(3), dp(5), dp(3))
+            layoutParams = LinearLayout.LayoutParams(-1, dp(64))
+        }
+        bottomNav.addView(navButton("Beranda", "⌂") {
+            runPageAction("window.scrollTo({top:0,behavior:'smooth'});")
+        })
+        bottomNav.addView(navButton("Dashboard", "▦") { openDashboard() })
+        bottomNav.addView(navButton("Notifikasi", "♧") {
+            runPageAction("document.querySelector('#notificationOpen')?.click();")
+        })
+        bottomNav.addView(navButton("Akun", "◎") {
+            runPageAction("document.querySelector('#adminOpen')?.click();")
+        })
+
+        root.addView(header)
+        root.addView(contentFrame)
+        root.addView(bottomNav)
         setContentView(root)
 
         webView.settings.apply {
@@ -100,7 +199,7 @@ class MainActivity : Activity() {
             allowFileAccess = false
             allowContentAccess = true
             cacheMode = WebSettings.LOAD_DEFAULT
-            userAgentString = "$userAgentString KOMSIAdminAndroid/1.0"
+            userAgentString = "$userAgentString KOMSIAdminAndroid/2.0"
         }
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
@@ -163,7 +262,7 @@ class MainActivity : Activity() {
         else webView.restoreState(savedInstanceState)
     }
 
-    @Deprecated("Deprecated in Android API; retained for WebView file chooser compatibility")
+    @Deprecated("Deprecated by Android API; retained for WebView file chooser compatibility")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST) {
@@ -188,6 +287,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         uploadCallback?.onReceiveValue(null)
         uploadCallback = null
+        handler.removeCallbacksAndMessages(null)
         if (::webView.isInitialized) {
             webView.stopLoading()
             webView.destroy()
