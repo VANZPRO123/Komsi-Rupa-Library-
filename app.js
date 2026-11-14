@@ -342,7 +342,10 @@
     notificationChannelUserId = userId;
     setNotificationConnection("connecting");
     const channel = supabase.channel("member-notifications-" + userId)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "member_notifications", filter: "recipient_id=eq." + userId }, async payload => {
+      // Listen to inserts without a server-side filter, then enforce recipient ownership
+      // in the client. This avoids missing events if a filtered Postgres Changes stream
+      // behaves inconsistently; RLS still limits which rows this session can receive.
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "member_notifications" }, async payload => {
         const incoming = payload.new;
         if (!incoming || incoming.recipient_id !== userId) return;
         if (notificationItems.some(item => String(item.id) === String(incoming.id))) return;
