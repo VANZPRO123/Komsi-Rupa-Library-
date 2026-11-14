@@ -321,11 +321,11 @@
     panel.innerHTML = '<p class="dashboard-empty">Memuat komentar…</p>';
     try {
       const result = await supabase.from("artwork_comments")
-        .select("id,body,user_id,created_at,member_profiles(display_name)")
+        .select("id,body,user_id,created_at")
         .eq("artwork_id", Number(id)).order("created_at", { ascending: true }).limit(100);
       if (result.error) throw result.error;
       panel.innerHTML = (result.data || []).map(row => {
-        const name = row.member_profiles?.display_name || "Anggota KOMSI";
+        const name = "Anggota KOMSI";
         const own = currentUser?.id === row.user_id;
         return '<article class="art-comment"><div><strong>' + escapeHtml(name) + '</strong><p>' + escapeHtml(row.body) + '</p><time>' + escapeHtml(prettyDate(row.created_at)) + '</time></div>' + (own ? '<button type="button" class="text-button" data-delete-comment="' + row.id + '">Hapus</button>' : '') + '</article>';
       }).join("") || '<p class="dashboard-empty">Belum ada komentar. Jadilah yang pertama.</p>';
@@ -409,7 +409,8 @@
     $("#signupForm").hidden = true;
     const [profile] = await Promise.all([
       supabase.from("member_profiles").select("display_name,bio,avatar_url").eq("user_id", user.id).maybeSingle(),
-      loadMemberFavorites()
+      loadMemberFavorites(),
+      loadSocialData()
     ]);
     if (profile.error) throw profile.error;
     currentProfile = profile.data || { display_name: user.user_metadata?.display_name || "", bio: "", avatar_url: "" };
