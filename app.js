@@ -240,7 +240,9 @@
     id = String(id);
     const wasSaved = favorites.has(id);
     wasSaved ? favorites.delete(id) : favorites.add(id);
-    try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
+    if (!currentUser) {
+      try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
+    }
     render();
     if (supabase && currentUser && /^\d+$/.test(id)) {
       try {
