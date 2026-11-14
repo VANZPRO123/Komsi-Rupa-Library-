@@ -735,3 +735,13 @@ button, input, select, textarea { min-width:0; }
 .art-like-button.liked svg,.art-like-action.liked svg { fill:#d04464; stroke:#d04464; }
 .art-favorite-action.saved svg { fill:#d9b85d; stroke:#8b7132; }
 .art-like-action,.art-favorite-action { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+
+
+/* Preview actions: favorite and like side by side */
+.art-thumb-actions { position:absolute; top:9px; right:9px; z-index:2; display:flex; align-items:center; gap:7px; }
+.art-thumb-actions .favorite-button { position:static; }
+.art-thumb-like { display:inline-flex; align-items:center; justify-content:center; gap:4px; min-width:34px; height:34px; padding:0 8px; border:1px solid rgba(0,0,0,.08); border-radius:18px; background:rgba(255,255,255,.94); color:var(--ink); font-size:11px; font-weight:700; cursor:pointer; }
+.art-thumb-like svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.art-thumb-like.liked { color:#d04464; }
+.art-thumb-like.liked svg { fill:#d04464; stroke:#d04464; }
+@media(max-width:600px){ .art-thumb-actions { top:7px; right:7px; gap:5px; } .art-thumb-actions .favorite-button,.art-thumb-like { width:32px; min-width:32px; height:32px; padding:0; } .art-thumb-like span { font-size:10px; } }
