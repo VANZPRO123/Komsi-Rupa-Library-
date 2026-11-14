@@ -38,6 +38,8 @@
   let favoritesOnly = false;
   let activeCreator = "";
   let currentUser = null;
+  let currentProfile = null;
+  const ADMIN_USER_ID = "b520cf6e-be06-4338-976d-8604877fd632";
   let favorites = new Set();
   try {
     favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
@@ -129,39 +131,37 @@
       const saved = favorites.has(String(a.id));
       return `<article class="art-card" data-open="${id}"><div class="art-thumb">${media}<span class="art-type">${escapeHtml(a.category || "Visual")}</span><button class="favorite-button ${saved ? "saved" : ""}" data-favorite="${id}" aria-label="Tambah ke favorit" type="button">${saved ? "♥" : "♡"}</button></div><div class="art-meta"><div class="art-title-row"><h3 class="art-title">${escapeHtml(a.title)}</h3><span class="art-size">${a.file_size ? bytesLabel(a.file_size) : ""}</span></div><button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "KOMSI Library")}</button><p class="art-views">◉ ${Number(a.view_count || 0).toLocaleString("id-ID")} dilihat</p></div></article>`;
     }).join("");
+    renderMemberPortfolio();
   }
 
-  function getVisitorId() {
-    const key = "komsi-rupa-visitor-id";
-    try {
-      let id = localStorage.getItem(key);
-      if (!id) {
-        id = window.crypto?.randomUUID ? window.crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-          const r = Math.random() * 16 | 0;
-          return (c === "x" ? r : (r & 3 | 8)).toString(16);
-        });
-        localStorage.setItem(key, id);
-      }
-      return id;
-    } catch (_) { return null; }
+  function renderMemberPortfolio() {
+    const panel = $("#memberPortfolio");
+    if (!panel) return;
+    if (!currentUser) { panel.innerHTML = ""; return; }
+    const mine = artworks.filter(item => !item.is_demo && item.created_by === currentUser.id)
+      .sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    panel.innerHTML = mine.length
+      ? mine.map(item => `<article class="member-work-item">
+          <div><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Visual")} · ${Number(item.view_count || 0).toLocaleString("id-ID")} dilihat</span></div>
+          <button type="button" class="text-button" data-member-open="${escapeHtml(item.id)}">Lihat karya ↗</button>
+        </article>`).join("")
+      : '<p class="member-empty">Kamu belum mengunggah karya. Karya yang kamu unggah akan muncul di sini.</p>';
   }
 
   async function recordArtworkView(id) {
     if (!supabase || !/^\d+$/.test(String(id))) return;
-    const visitorId = getVisitorId();
-    if (!visitorId) return;
     try {
-      const { error } = await supabase.from("artwork_views").insert({ artwork_id: Number(id), visitor_id: visitorId });
-      if (error) {
-        if (error.code !== "23505") console.warn("Statistik kunjungan belum tercatat:", error.message);
-        return;
-      }
+      const { data, error } = await supabase.functions.invoke("record-artwork-view", {
+        body: { artwork_id: Number(id) }
+      });
+      if (error) throw error;
+      if (!data?.counted) return;
       const artwork = artworks.find(item => String(item.id) === String(id));
       if (artwork) artwork.view_count = Number(artwork.view_count || 0) + 1;
       render();
       refreshAdminStats();
     } catch (error) {
-      console.warn("Statistik kunjungan tidak tersedia:", error);
+      console.warn("Statistik kunjungan belum tercatat:", error?.message || error);
     }
   }
 
@@ -190,8 +190,9 @@
       const pageSize = 500;
       let offset = 0;
       while (true) {
-        const { data, error } = await supabase.from(TABLE)
-          .select("id,title,view_count")
+        let query = supabase.from(TABLE).select("id,title,view_count");
+        if (currentUser.id !== ADMIN_USER_ID) query = query.eq("created_by", currentUser.id);
+        const { data, error } = await query
           .order("view_count", { ascending: false })
           .range(offset, offset + pageSize - 1);
         if (error) throw error;
@@ -202,10 +203,11 @@
       }
       const totalViews = rows.reduce((sum, row) => sum + Number(row.view_count || 0), 0);
       const top = rows.filter(row => Number(row.view_count || 0) > 0).slice(0, 3);
+      const isAdmin = currentUser.id === ADMIN_USER_ID;
       panel.innerHTML = `<div class="admin-stat-grid">
-        <div><strong>${rows.length.toLocaleString("id-ID")}</strong><span>Total karya</span></div>
-        <div><strong>${totalViews.toLocaleString("id-ID")}</strong><span>Total dilihat</span></div>
-      </div><div class="admin-stat-top"><b>Karya paling sering dilihat</b>${top.length
+        <div><strong>${rows.length.toLocaleString("id-ID")}</strong><span>${isAdmin ? "Total karya library" : "Karya saya"}</span></div>
+        <div><strong>${totalViews.toLocaleString("id-ID")}</strong><span>${isAdmin ? "Total dilihat" : "Dilihat pada karya saya"}</span></div>
+      </div><div class="admin-stat-top"><b>${isAdmin ? "Karya paling sering dilihat" : "Karya saya paling sering dilihat"} </b>${top.length
         ? `<ol>${top.map(row => `<li>${escapeHtml(row.title)} <span>${Number(row.view_count || 0).toLocaleString("id-ID")}×</span></li>`).join("")}</ol>`
         : "<p>Belum ada data kunjungan.</p>"}</div>`;
     } catch (error) {
@@ -226,11 +228,101 @@
     render();
   }
 
-  function toggleFavorite(id) {
-    id = String(id);
-    favorites.has(id) ? favorites.delete(id) : favorites.add(id);
-    try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
+  async function loadMemberFavorites() {
+    if (!supabase || !currentUser) return;
+    const { data, error } = await supabase.from("artwork_favorites").select("artwork_id").eq("user_id", currentUser.id);
+    if (error) { favorites = new Set(); render(); console.warn("Favorit akun belum dapat dimuat:", error.message); return; }
+    favorites = new Set((data || []).map(row => String(row.artwork_id)));
     render();
+  }
+
+  async function toggleFavorite(id) {
+    id = String(id);
+    const wasSaved = favorites.has(id);
+    wasSaved ? favorites.delete(id) : favorites.add(id);
+    if (!currentUser) {
+      try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
+    }
+    render();
+    if (supabase && currentUser && /^\d+$/.test(id)) {
+      try {
+        const request = wasSaved
+          ? supabase.from("artwork_favorites").delete().eq("user_id", currentUser.id).eq("artwork_id", Number(id))
+          : supabase.from("artwork_favorites").insert({ user_id: currentUser.id, artwork_id: Number(id) });
+        const { error } = await request;
+        if (error) throw error;
+      } catch (error) {
+        wasSaved ? favorites.add(id) : favorites.delete(id);
+        if (!currentUser) {
+          try { localStorage.setItem("komsi-rupa-favorites", JSON.stringify([...favorites])); } catch (_) {}
+        }
+        render();
+        showDeleteMessage("Favorit belum tersinkron: " + getErrorMessage(error));
+      }
+    }
+  }
+
+  async function showMemberSession(user) {
+    currentUser = user;
+    $("#uploadPanel").hidden = false;
+    $("#loginForm").hidden = true;
+    $("#signupForm").hidden = true;
+    const [profile] = await Promise.all([
+      supabase.from("member_profiles").select("display_name,bio").eq("user_id", user.id).maybeSingle(),
+      loadMemberFavorites()
+    ]);
+    if (profile.error) throw profile.error;
+    currentProfile = profile.data || { display_name: user.user_metadata?.display_name || "", bio: "" };
+    $("#profileDisplayName").value = currentProfile.display_name || "";
+    $("#profileBio").value = currentProfile.bio || "";
+    $("#memberGreeting").textContent = currentProfile.display_name || "Akun anggota";
+    $("#memberEmailLabel").textContent = user.email || "";
+    if ($("#artCreator") && !$("#artCreator").value) $("#artCreator").value = currentProfile.display_name || "";
+    refreshAdminStats();
+  }
+
+  async function registerMember(event) {
+    event.preventDefault();
+    const message = $("#signupMessage"), button = $("#signupForm button[type='submit']");
+    button.disabled = true;
+    try {
+      const display_name = $("#memberName").value.trim();
+      const { data, error } = await supabase.auth.signUp({
+        email: $("#memberEmail").value.trim(),
+        password: $("#memberPassword").value,
+        options: { data: { display_name }, emailRedirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) throw error;
+      if (data.session && data.user) {
+        await showMemberSession(data.user);
+        message.textContent = "Akun berhasil dibuat. Selamat bergabung!";
+      } else {
+        message.textContent = "Pendaftaran diterima. Cek email untuk konfirmasi, lalu masuk.";
+        message.style.color = "#4e7812";
+        $("#signupForm").hidden = true;
+        $("#loginForm").hidden = false;
+        $("#adminEmail").value = $("#memberEmail").value.trim();
+        showMessage("Pendaftaran diterima. Silakan cek email untuk konfirmasi sebelum masuk.", true);
+      }
+    } catch (error) { message.textContent = "Pendaftaran gagal: " + getErrorMessage(error); }
+    finally { button.disabled = false; }
+  }
+
+  async function saveMemberProfile(event) {
+    event.preventDefault();
+    if (!supabase || !currentUser) { $("#profileMessage").textContent = "Sesi akun berakhir. Silakan masuk kembali."; return; }
+    const display_name = $("#profileDisplayName").value.trim();
+    const bio = $("#profileBio").value.trim();
+    const message = $("#profileMessage");
+    try {
+      const { error } = await supabase.from("member_profiles").upsert({ user_id: currentUser.id, display_name, bio, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+      if (error) throw error;
+      currentProfile = { display_name, bio };
+      $("#memberGreeting").textContent = display_name || "Akun anggota";
+      $("#artCreator").value = display_name;
+      message.textContent = "Profil berhasil disimpan.";
+      message.style.color = "#4e7812";
+    } catch (error) { message.textContent = "Gagal menyimpan profil: " + getErrorMessage(error); }
   }
 
   function openDetail(id) {
@@ -245,7 +337,7 @@
     const media = preview
       ? (isVideo(a) && !a.preview_url ? `<div class="video-placeholder">▶ Video</div>` : isVideo(a) ? `<video src="${escapeHtml(a.file_url)}" controls playsinline></video>` : `<img src="${escapeHtml(preview)}" alt="${escapeHtml(a.title)}">`)
       : `<div class="video-placeholder">Preview belum tersedia</div>`;
-    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button></p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
+    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button></p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo && (a.created_by === currentUser.id || currentUser.id === ADMIN_USER_ID) ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
     $("#detailDialog")?.showModal();
     if (!a.is_demo) recordArtworkView(a.id);
   }
@@ -286,22 +378,19 @@
         "Waktu koneksi habis setelah 15 detik. Periksa koneksi internet dan URL Supabase."
       );
       if (result.error) throw result.error;
-      currentUser = result.data.user;
-      $("#uploadPanel").hidden = false;
-      $("#loginForm").hidden = true;
-      showMessage("Berhasil masuk. Kamu dapat mengunggah karya.", true);
-      refreshAdminStats();
+      await showMemberSession(result.data.user);
+      showMessage("Berhasil masuk. Selamat datang di KOMSI RUPA LIBRARY.", true);
     } catch (error) {
       console.error("Login admin gagal:", error);
       showMessage("Login gagal: " + getErrorMessage(error));
     } finally {
-      if (button) { button.disabled = false; button.textContent = "Masuk sebagai admin"; }
+      if (button) { button.disabled = false; button.textContent = "Masuk"; }
     }
   }
 
   async function uploadArtwork(event) {
     event.preventDefault();
-    if (!supabase || !currentUser) { showMessage("Silakan masuk sebagai admin terlebih dahulu."); return; }
+    if (!supabase || !currentUser) { showMessage("Silakan masuk ke akun anggota terlebih dahulu."); return; }
     const file = $("#artFile")?.files?.[0];
     const previewFile = $("#artPreviewFile")?.files?.[0];
     if (!file) { showMessage("Pilih file karya terlebih dahulu."); return; }
@@ -346,7 +435,8 @@
         file_url: fileUrl,
         file_name: file.name,
         file_size: file.size,
-        created_by: currentUser.id
+        created_by: currentUser.id,
+        uploaded_by: currentUser.id
       };
       const { error: insertError } = await supabase.from(TABLE).insert(record);
       if (insertError) {
@@ -381,7 +471,7 @@
 
   async function deleteArtwork(id) {
     if (!supabase || !currentUser) {
-      showDeleteMessage("Masuk sebagai admin untuk menghapus karya.");
+      showDeleteMessage("Masuk ke akun anggota untuk menghapus karya milikmu.");
       return;
     }
     const artwork = artworks.find(item => String(item.id) === String(id));
@@ -394,7 +484,7 @@
     try {
       // SELECT hanya memakai kolom inti yang diperlukan; preview_url tidak diwajibkan.
       const { data: rows, error: readError } = await supabase.from(TABLE)
-        .select("id,image_url,file_url")
+        .select("id,image_url,preview_url,file_url")
         .eq("id", id).limit(1);
       if (readError) throw readError;
       if (!rows || rows.length === 0) {
@@ -402,15 +492,16 @@
       }
 
       // Minta representation agar RLS/no-op DELETE tidak dianggap berhasil.
-      const { data: deletedRows, error: deleteError } = await supabase.from(TABLE)
-        .delete().eq("id", id).select("id");
+      let deleteQuery = supabase.from(TABLE).delete().eq("id", id);
+      if (currentUser.id !== ADMIN_USER_ID) deleteQuery = deleteQuery.eq("id", id).eq("created_by", currentUser.id);
+      const { data: deletedRows, error: deleteError } = await deleteQuery.select("id");
       if (deleteError) throw deleteError;
       if (!deletedRows || deletedRows.length === 0) {
         throw new Error("Tidak ada baris yang terhapus. Periksa policy DELETE tabel artworks dan akun admin.");
       }
 
       const row = rows[0];
-      const paths = [...new Set([row.file_url, row.image_url]
+      const paths = [...new Set([row.file_url, row.image_url, row.preview_url]
         .map(storagePathFromPublicUrl).filter(Boolean))];
       let storageWarning = "";
       if (paths.length) {
@@ -443,8 +534,12 @@
     try { if (supabase) await supabase.auth.signOut(); }
     catch (error) { console.error("Logout gagal:", error); }
     currentUser = null;
+    currentProfile = null;
     if ($("#uploadPanel")) $("#uploadPanel").hidden = true;
     if ($("#loginForm")) $("#loginForm").hidden = false;
+    if ($("#signupForm")) $("#signupForm").hidden = true;
+    favorites = new Set(JSON.parse(localStorage.getItem("komsi-rupa-favorites") || "[]"));
+    render();
     showMessage("Kamu telah keluar.");
   }
 
@@ -488,6 +583,10 @@
       const card = event.target.closest("[data-open]");
       if (card) openDetail(card.dataset.open);
     });
+    $("#memberPortfolio")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-member-open]");
+      if (button) openDetail(button.dataset.memberOpen);
+    });
     $("#clearCreatorFilter")?.addEventListener("click", () => filterByCreator(""));
     $("#favoritesToggle")?.addEventListener("click", () => {
       favoritesOnly = !favoritesOnly;
@@ -512,17 +611,18 @@
       if (shareButton) { event.preventDefault(); event.stopPropagation(); shareArtwork(shareButton.dataset.shareArtwork); }
     });
     $("#loginForm")?.addEventListener("submit", loginAdmin);
+    $("#signupForm")?.addEventListener("submit", registerMember);
+    $("#showSignup")?.addEventListener("click", () => { $("#loginForm").hidden = true; $("#signupForm").hidden = false; });
+    $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
+    $("#profileForm")?.addEventListener("submit", saveMemberProfile);
     $("#logoutButton")?.addEventListener("click", logoutAdmin);
 
     if (supabase) {
       supabase.auth.getSession().then(({ data, error }) => {
         if (error) console.warn("Gagal memeriksa sesi:", error.message);
         if (data?.session) {
-          currentUser = data.session.user;
-          if ($("#uploadPanel")) $("#uploadPanel").hidden = false;
-          if ($("#loginForm")) $("#loginForm").hidden = true;
-          refreshAdminStats();
+          showMemberSession(data.session.user).catch(error => console.warn("Profil anggota gagal dimuat:", error));
         }
       }).catch(error => console.warn("Pemeriksaan sesi gagal:", error));
     }

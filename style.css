@@ -337,3 +337,19 @@ button { color: inherit; }
 .creator-filter-button { padding: 0; border: 0; background: transparent; color: #777871; font: inherit; font-size: inherit; text-align: left; cursor: pointer; }
 .creator-filter-button:hover { color: var(--ink); text-decoration: underline; }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+
+/* Member accounts and personal portfolio */
+.profile-form { display:grid; gap:8px; padding:14px; margin:12px 0 20px; border:1px solid var(--line); border-radius:14px; }
+.profile-form label { font-size:11px; font-weight:650; }
+.profile-email { margin:3px 0 0; color:var(--muted); font-size:11px; }
+.member-section-title { margin:18px 0 10px; font-size:14px; }
+.text-button { border:0; padding:8px 0; background:transparent; color:var(--ink); font:inherit; font-size:12px; font-weight:650; cursor:pointer; text-align:left; }
+#signupForm[hidden], #loginForm[hidden] { display:none !important; }
+
+.member-portfolio{display:grid;gap:9px;margin:10px 0 18px}
+.member-work-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line,#e7e7e7);border-radius:12px;background:var(--surface,#fff)}
+.member-work-item>div{display:grid;gap:4px;min-width:0}
+.member-work-item strong{font-size:13px;overflow-wrap:anywhere}
+.member-work-item span,.member-empty{font-size:12px;color:var(--muted,#777)}
+.member-work-item .text-button{white-space:nowrap}

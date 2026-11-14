@@ -13,7 +13,7 @@
       document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script defer src="app.js?v=20261114-phase2b"></script>
+  <script defer src="app.js?v=20261114-views-edge1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -23,7 +23,7 @@
     </a>
     <nav class="header-nav" aria-label="Navigasi utama">
       <a href="#tentang">Tentang</a>
-      <button type="button" class="admin-link" id="adminOpen">Admin ↗</button>
+      <button type="button" class="admin-link" id="adminOpen">Akun Anggota ↗</button>
     </nav>
   </header>
 
@@ -104,7 +104,7 @@
       <div><p class="section-kicker">AREA TERBATAS</p><h2>Masuk Admin</h2></div>
       <button type="button" class="icon-button" data-close-dialog="adminDialog" aria-label="Tutup">×</button>
     </div>
-    <p class="dialog-intro">Masuk untuk mengelola koleksi visual KOMSI.</p>
+    <p class="dialog-intro">Masuk atau buat akun anggota untuk menyimpan favorit dan mengelola portofolio karya.</p>
     <form id="loginForm" class="form-stack">
       <label for="adminEmail">Email</label>
       <input id="adminEmail" name="email" type="email" autocomplete="username" placeholder="admin@email.com" required>
@@ -112,9 +112,25 @@
       <input id="adminPassword" name="password" type="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required>
       <p id="adminMessage" class="form-message" role="status"></p>
       <button class="primary-cta dialog-submit" type="submit">Masuk <span aria-hidden="true">↗</span></button>
+      <button type="button" class="text-button" id="showSignup">Belum punya akun? Daftar anggota</button>
+    </form>
+    <form id="signupForm" class="form-stack" hidden>
+      <label for="memberName">Nama tampilan</label><input id="memberName" type="text" maxlength="80" required>
+      <label for="memberEmail">Email</label><input id="memberEmail" type="email" autocomplete="email" required>
+      <label for="memberPassword">Kata sandi (minimal 8 karakter)</label><input id="memberPassword" type="password" minlength="8" autocomplete="new-password" required>
+      <p id="signupMessage" class="form-message" role="status"></p>
+      <button class="primary-cta dialog-submit" type="submit">Buat akun anggota ↗</button>
+      <button type="button" class="text-button" id="showLogin">Sudah punya akun? Masuk</button>
     </form>
     <section id="uploadPanel" class="upload-panel" hidden>
-      <div class="dialog-head"><h3>Unggah karya</h3><button type="button" id="logoutButton" class="text-button">Keluar</button></div>
+      <div class="dialog-head"><div><h3 id="memberGreeting">Akun anggota</h3><p id="memberEmailLabel" class="profile-email"></p></div><button type="button" id="logoutButton" class="text-button">Keluar</button></div>
+      <form id="profileForm" class="profile-form">
+        <label for="profileDisplayName">Nama profil</label><input id="profileDisplayName" type="text" maxlength="80" required>
+        <label for="profileBio">Bio singkat</label><textarea id="profileBio" rows="2" maxlength="240"></textarea>
+        <button type="submit" class="secondary-button">Simpan profil</button><p id="profileMessage" class="form-message" role="status"></p>
+      </form>
+      <h3 class="member-section-title">Portofolio saya</h3>
+      <div id="memberPortfolio" class="member-portfolio" aria-live="polite"></div>
       <div id="adminStats" class="admin-stats" aria-live="polite"><p>Memuat statistik katalog…</p></div>
       <form id="uploadForm" class="form-stack">
         <label for="artTitle">Judul karya</label>
