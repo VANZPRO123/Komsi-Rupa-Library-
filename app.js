@@ -337,7 +337,7 @@
     const media = preview
       ? (isVideo(a) && !a.preview_url ? `<div class="video-placeholder">▶ Video</div>` : isVideo(a) ? `<video src="${escapeHtml(a.file_url)}" controls playsinline></video>` : `<img src="${escapeHtml(preview)}" alt="${escapeHtml(a.title)}">`)
       : `<div class="video-placeholder">Preview belum tersedia</div>`;
-    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button></p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo && (a.created_by === currentUser.id || currentUser.id === ADMIN_USER_ID) ? `<button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
+    $("#detailContent").innerHTML = `<div class="detail-layout"><div class="detail-preview">${media}</div><div class="detail-info"><p class="eyebrow">${escapeHtml(a.category || "VISUAL")} · ${escapeHtml(prettyDate(a.created_at))}</p><h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.description || "Tidak ada deskripsi untuk karya ini.")}</p><p>Kreator: <button type="button" class="creator-filter-button" data-creator-filter="${escapeHtml(a.creator || "KOMSI Library")}">${escapeHtml(a.creator || "Tidak dicantumkan")}</button></p>${Array.isArray(a.tags) && a.tags.length ? `<p class="detail-tags">Tag: ${a.tags.map(tag => `#${escapeHtml(tag)}`).join(" ")}</p>` : ""}<p class="detail-view-count">Dilihat ${Number(a.view_count || 0).toLocaleString("id-ID")} kali</p><p>File: ${escapeHtml(a.file_name || "File karya")}${a.file_size ? ` · ${bytesLabel(a.file_size)}` : ""}</p><div class="detail-actions">${a.file_url ? `<a class="primary-button" href="${escapeHtml(a.file_url)}" target="_blank" rel="noopener" download>Unduh karya ↓</a>` : `<button class="primary-button" disabled>File tidak tersedia</button>`}<button class="secondary-button" data-detail-favorite="${escapeHtml(a.id)}">${favorites.has(String(a.id)) ? "♥ Tersimpan" : "♡ Simpan favorit"}</button><button class="secondary-button" data-share-artwork="${escapeHtml(a.id)}" type="button">Bagikan ↗</button>${currentUser && !a.is_demo && (a.created_by === currentUser.id || currentUser.id === ADMIN_USER_ID) ? `<button class="secondary-button" data-edit-artwork="${escapeHtml(a.id)}" type="button">Edit karya</button><button class="delete-button" data-delete-artwork="${escapeHtml(a.id)}" type="button">Hapus karya</button>` : ""}</div></div></div>`;
     $("#detailDialog")?.showModal();
     if (!a.is_demo) recordArtworkView(a.id);
   }
@@ -467,6 +467,144 @@
       if (index === -1) return null;
       return decodeURIComponent(parsed.pathname.slice(index + marker.length));
     } catch (_) { return null; }
+  }
+
+  function openArtworkEditor(id) {
+    const artwork = artworks.find(item => String(item.id) === String(id));
+    if (!artwork || artwork.is_demo || !currentUser) return;
+    const isOwner = artwork.created_by === currentUser.id;
+    if (!isOwner && currentUser.id !== ADMIN_USER_ID) {
+      showDeleteMessage("Kamu hanya dapat mengedit karya yang kamu unggah.");
+      return;
+    }
+    const oldForm = $("#artworkEditForm");
+    if (oldForm) oldForm.remove();
+    const form = document.createElement("form");
+    form.id = "artworkEditForm";
+    form.className = "profile-form";
+    form.innerHTML = `
+      <h3 class="member-section-title">Edit karya</h3>
+      <label for="editArtTitle">Judul karya</label>
+      <input id="editArtTitle" name="title" maxlength="160" required value="${escapeHtml(artwork.title || "")}">
+      <label for="editArtCategory">Kategori</label>
+      <select id="editArtCategory" name="category">
+        ${["Desain","Ilustrasi","Fotografi","Artwork","Video"].map(v => `<option value="${v}" ${artwork.category === v ? "selected" : ""}>${v}</option>`).join("")}
+      </select>
+      <label for="editArtCreator">Nama kreator</label>
+      <input id="editArtCreator" name="creator" maxlength="120" required value="${escapeHtml(artwork.creator || "")}">
+      <label for="editArtTags">Tag (pisahkan dengan koma)</label>
+      <input id="editArtTags" name="tags" value="${escapeHtml(Array.isArray(artwork.tags) ? artwork.tags.join(", ") : (artwork.tags || ""))}">
+      <label for="editArtDescription">Deskripsi</label>
+      <textarea id="editArtDescription" name="description" rows="3" maxlength="3000">${escapeHtml(artwork.description || "")}</textarea>
+      <label for="editArtFile">Ganti file karya (opsional, maksimal 50 MB)</label>
+      <input id="editArtFile" name="file" type="file" accept="image/*,video/*">
+      <label for="editArtPreview">Ganti gambar pratinjau (opsional)</label>
+      <input id="editArtPreview" name="preview" type="file" accept="image/*">
+      <p class="form-message" id="editArtworkMessage" role="status"></p>
+      <button type="submit" class="primary-button">Simpan perubahan</button>
+      <button type="button" class="text-button" id="cancelArtworkEdit">Batal</button>`;
+    $("#detailContent").appendChild(form);
+    $("#cancelArtworkEdit").addEventListener("click", () => form.remove());
+    form.addEventListener("submit", saveArtworkEdits);
+    form.dataset.artworkId = String(id);
+    form.scrollIntoView({behavior:"smooth", block:"nearest"});
+  }
+
+  async function saveArtworkEdits(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const id = form.dataset.artworkId;
+    const artwork = artworks.find(item => String(item.id) === String(id));
+    const message = $("#editArtworkMessage");
+    const submit = form.querySelector('button[type="submit"]');
+    if (!artwork || !currentUser || (artwork.created_by !== currentUser.id && currentUser.id !== ADMIN_USER_ID)) {
+      message.textContent = "Akses ditolak. Kamu hanya dapat mengubah karya milikmu.";
+      return;
+    }
+    const file = $("#editArtFile").files[0];
+    const previewFile = $("#editArtPreview").files[0];
+    if (file && file.size > MAX_FILE_SIZE) { message.textContent = "Ukuran file melebihi 50 MB."; return; }
+    if (previewFile && previewFile.size > MAX_FILE_SIZE) { message.textContent = "Ukuran gambar pratinjau melebihi 50 MB."; return; }
+
+    submit.disabled = true;
+    submit.textContent = "Menyimpan…";
+    const newPaths = [];
+    try {
+      let fileUrl = artwork.file_url || "";
+      let previewUrl = artwork.preview_url || artwork.image_url || "";
+      let fileName = artwork.file_name || "";
+      let fileSize = Number(artwork.file_size || 0);
+
+      if (file) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+        const path = `${currentUser.id}/edit-${Date.now()}-${safeName}`;
+        const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+          upsert:false, contentType:file.type || "application/octet-stream"
+        });
+        if (error) throw error;
+        newPaths.push(path);
+        fileUrl = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+        fileName = file.name;
+        fileSize = file.size;
+        if (file.type.startsWith("image/")) previewUrl = fileUrl;
+        else if (!artwork.preview_url) previewUrl = "";
+      }
+
+      if (previewFile) {
+        const safePreviewName = previewFile.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+        const path = `${currentUser.id}/edit-preview-${Date.now()}-${safePreviewName}`;
+        const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, previewFile, {
+          upsert:false, contentType:previewFile.type || "image/*"
+        });
+        if (error) throw error;
+        newPaths.push(path);
+        previewUrl = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+      }
+
+      const record = {
+        title: $("#editArtTitle").value.trim(),
+        category: $("#editArtCategory").value,
+        creator: $("#editArtCreator").value.trim(),
+        tags: $("#editArtTags").value.split(",").map(tag => tag.trim()).filter(Boolean).slice(0,20),
+        description: $("#editArtDescription").value.trim(),
+        file_url: fileUrl,
+        image_url: previewUrl || fileUrl,
+        preview_url: previewUrl || null,
+        file_name: fileName,
+        file_size: fileSize
+      };
+      let query = supabase.from(TABLE).update(record).eq("id", id);
+      if (currentUser.id !== ADMIN_USER_ID) query = query.eq("created_by", currentUser.id);
+      const { data, error } = await query.select("id").maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("Perubahan tidak tersimpan. Karya bukan milik akun ini atau akses database ditolak.");
+
+      const oldPaths = [...new Set([artwork.file_url, artwork.image_url, artwork.preview_url]
+        .map(storagePathFromPublicUrl).filter(Boolean))];
+      const newPathSet = new Set(newPaths);
+      const obsoletePaths = oldPaths.filter(path => !newPathSet.has(path) &&
+        path !== storagePathFromPublicUrl(fileUrl) &&
+        path !== storagePathFromPublicUrl(previewUrl));
+      if (obsoletePaths.length) {
+        const { error: cleanupError } = await supabase.storage.from(STORAGE_BUCKET).remove(obsoletePaths);
+        if (cleanupError) console.warn("Metadata tersimpan, tetapi file lama belum dibersihkan:", cleanupError);
+      }
+      message.textContent = "Karya berhasil diperbarui.";
+      message.style.color = "#4e7812";
+      await loadArtworks();
+      refreshAdminStats();
+      openDetail(id);
+    } catch (error) {
+      if (newPaths.length) {
+        const { error: cleanupError } = await supabase.storage.from(STORAGE_BUCKET).remove(newPaths);
+        if (cleanupError) console.warn("File unggahan sementara gagal dibersihkan:", cleanupError);
+      }
+      message.textContent = "Gagal menyimpan perubahan: " + getErrorMessage(error);
+      console.error("Edit karya gagal:", error);
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Simpan perubahan";
+    }
   }
 
   async function deleteArtwork(id) {
@@ -605,6 +743,8 @@
       if (creatorButton && !$("#artGrid")?.contains(creatorButton)) { event.preventDefault(); event.stopPropagation(); $("#detailDialog")?.close(); filterByCreator(creatorButton.dataset.creatorFilter); return; }
       const favoriteButton = event.target.closest("[data-detail-favorite]");
       if (favoriteButton) { toggleFavorite(favoriteButton.dataset.detailFavorite); openDetail(favoriteButton.dataset.detailFavorite); return; }
+      const editButton = event.target.closest("[data-edit-artwork]");
+      if (editButton) { event.preventDefault(); event.stopPropagation(); openArtworkEditor(editButton.dataset.editArtwork); return; }
       const deleteButton = event.target.closest("[data-delete-artwork]");
       if (deleteButton) { event.preventDefault(); event.stopPropagation(); deleteArtwork(deleteButton.dataset.deleteArtwork); return; }
       const shareButton = event.target.closest("[data-share-artwork]");
