@@ -214,9 +214,11 @@
       const metricCards = isAdmin
         ? `<div class="admin-stat-card"><strong>${number(stats.artwork_count)}</strong><span>Total karya</span></div>
            <div class="admin-stat-card"><strong>${number(stats.member_count)}</strong><span>Total anggota terdaftar</span></div>
-           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya</span></div>`
+           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya</span></div>
+           <div class="admin-stat-card"><strong>${number(stats.profile_visit_total)}</strong><span>Total kunjungan profil</span></div>`
         : `<div class="admin-stat-card"><strong>${number(stats.artwork_count)}</strong><span>Total karya saya</span></div>
-           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya saya</span></div>`;
+           <div class="admin-stat-card"><strong>${number(stats.view_total)}</strong><span>Total kunjungan karya saya</span></div>
+           <div class="admin-stat-card"><strong>${number(stats.profile_visit_total)}</strong><span>Kunjungan profil saya</span></div>`;
       const popularHtml = popular.length
         ? `<ol class="dashboard-ranking">${popular.map((item, index) => `<li><span class="dashboard-rank">${index + 1}</span><span class="dashboard-item-name">${escapeHtml(item.title || "Tanpa judul")}</span><strong>${number(item.view_count)} <small>kunjungan</small></strong></li>`).join("")}</ol>`
         : '<p class="dashboard-empty">Belum ada karya yang tercatat.</p>';
@@ -230,6 +232,12 @@
       const recentHtml = recent.length
         ? `<ul class="dashboard-recent">${recent.map(item => `<li><div><strong>${escapeHtml(item.title || "Tanpa judul")}</strong><span>${escapeHtml(item.category || "Tanpa kategori")} · ${escapeHtml(item.creator || "Anggota KOMSI")}</span></div><time>${escapeHtml(dateLabel(item.created_at))}</time></li>`).join("")}</ul>`
         : '<p class="dashboard-empty">Belum ada aktivitas upload.</p>';
+      const members = Array.isArray(stats.members) ? stats.members : [];
+      const memberStatsHtml = isAdmin
+        ? `<section class="dashboard-stat-section dashboard-stat-wide"><h4>Statistik karya setiap anggota</h4>${members.length
+            ? `<div class="dashboard-member-table"><div class="dashboard-member-row dashboard-member-head"><span>Anggota</span><span>Karya</span><span>Kunjungan karya</span><span>Kunjungan profil</span></div>${members.map(item => `<div class="dashboard-member-row"><strong>${escapeHtml(item.display_name || "Anggota KOMSI")}</strong><span>${number(item.artwork_count)}</span><span>${number(item.view_total)}</span><span>${number(item.profile_visits)}</span></div>`).join("")}</div>`
+            : '<p class="dashboard-empty">Belum ada data anggota.</p>'}</section>`
+        : "";
 
       panel.innerHTML = `<div class="dashboard-heading"><div><p class="section-kicker">RINGKASAN DATA</p><h3>${isAdmin ? "Dashboard Statistik" : "Statistik portofolio saya"}</h3></div><button type="button" class="dashboard-refresh" id="refreshDashboardStats">Perbarui ↻</button></div>
         <div class="admin-stat-grid ${isAdmin ? "is-admin" : "is-member"}">${metricCards}</div>
@@ -237,6 +245,7 @@
           <section class="dashboard-stat-section"><h4>${isAdmin ? "Karya paling populer" : "Karya saya paling populer"}</h4>${popularHtml}</section>
           <section class="dashboard-stat-section"><h4>${isAdmin ? "Kategori paling aktif" : "Kategori karya saya"}</h4>${categoryHtml}</section>
           <section class="dashboard-stat-section dashboard-stat-wide"><h4>${isAdmin ? "Aktivitas upload terbaru" : "Upload terbaru saya"}</h4>${recentHtml}</section>
+          ${memberStatsHtml}
         </div>`;
       $("#refreshDashboardStats")?.addEventListener("click", refreshAdminStats);
     } catch (error) {
