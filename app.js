@@ -555,6 +555,9 @@
       }
       const count = await supabase.rpc("get_member_profile_visit_count", { p_profile_user_id: profileId });
       if (count.error) console.warn("Jumlah kunjungan profil tidak tersedia:", count.error.message);
+      const followers = await supabase.from("member_follows").select("follower_id", { count: "exact", head: true }).eq("following_id", profileId);
+      const followerTotal = Number(followers.count || 0);
+      const followButton = currentUser?.id === profileId ? "" : '<button type="button" class="profile-follow-button" data-follow-member="' + escapeHtml(profileId) + '">' + (followingMembers.has(String(profileId)) ? "Mengikuti" : "Ikuti") + '</button>';
       const name = profile.display_name || "Anggota KOMSI";
       const initial = escapeHtml(name.trim().charAt(0).toUpperCase() || "K");
       const workCards = works.length ? works.map(item => {
@@ -563,7 +566,7 @@
         return '<button type="button" class="public-profile-work" data-profile-work="' + escapeHtml(item.id) + '"><span class="public-profile-work-image">' + image + '</span><strong>' + escapeHtml(item.title || "Tanpa judul") + '</strong><small>' + escapeHtml(item.category || "Visual") + ' · ' + Number(item.view_count || 0).toLocaleString("id-ID") + ' dilihat</small></button>';
       }).join("") : '<p class="dashboard-empty">Anggota ini belum mengunggah karya.</p>';
       const shareUrl = new URL(window.location.href); shareUrl.searchParams.set("profil", profileId);
-      content.innerHTML = '<section class="public-profile-card"><div class="public-profile-identity">' + (profile.avatar_url ? '<img src="' + escapeHtml(profile.avatar_url) + '" alt="Foto ' + escapeHtml(name) + '">' : '<span>' + initial + '</span>') + '<div><p class="section-kicker">PROFIL ANGGOTA KOMSI</p><h2>' + escapeHtml(name) + '</h2><p>' + escapeHtml(profile.bio || "Belum ada bio.") + '</p></div></div><div class="public-profile-metrics"><div><strong>' + works.length.toLocaleString("id-ID") + '</strong><span>Karya</span></div><div><strong>' + Number(count.data || 0).toLocaleString("id-ID") + '</strong><span>Kunjungan profil</span></div></div><div class="public-profile-heading"><h3>Portofolio karya</h3><button type="button" class="text-button" id="shareMemberProfile">Bagikan profil ↗</button></div>' + (works.length ? '<div class="public-profile-works">' + workCards + '</div>' : workCards) + '</section>';
+      content.innerHTML = '<section class="public-profile-card"><div class="public-profile-identity">' + (profile.avatar_url ? '<img src="' + escapeHtml(profile.avatar_url) + '" alt="Foto ' + escapeHtml(name) + '">' : '<span>' + initial + '</span>') + '<div><p class="section-kicker">PROFIL ANGGOTA KOMSI</p><h2>' + escapeHtml(name) + '</h2><p>' + escapeHtml(profile.bio || "Belum ada bio.") + '</p></div></div><div class="public-profile-metrics"><div><strong>' + works.length.toLocaleString("id-ID") + '</strong><span>Karya</span></div><div><strong>' + followerTotal.toLocaleString("id-ID") + '</strong><span>Pengikut</span></div><div><strong>' + Number(count.data || 0).toLocaleString("id-ID") + '</strong><span>Kunjungan profil</span></div></div><div class="public-profile-heading"><h3>Portofolio karya</h3>' + followButton + '<button type="button" class="text-button" id="shareMemberProfile">Bagikan profil ↗</button></div>' + (works.length ? '<div class="public-profile-works">' + workCards + '</div>' : workCards) + '</section>';
       $("#shareMemberProfile")?.addEventListener("click", async () => {
         try { if (navigator.share) await navigator.share({ title: "Profil " + name + " — KOMSI RUPA LIBRARY", url: shareUrl.toString() }); else { await navigator.clipboard.writeText(shareUrl.toString()); const button = $("#shareMemberProfile"); if (button) button.textContent = "Link tersalin ✓"; } }
         catch (error) { if (error?.name !== "AbortError") console.warn("Link profil tidak dapat dibagikan:", error); }
@@ -1047,6 +1050,8 @@
       if (profileWorkButton) { const workId = profileWorkButton.dataset.profileWork; $("#profileDialog")?.close(); openDetail(workId); return; }
       const creatorButton = event.target.closest("[data-creator-filter]");
       if (creatorButton && !$("#artGrid")?.contains(creatorButton)) { event.preventDefault(); event.stopPropagation(); $("#detailDialog")?.close(); filterByCreator(creatorButton.dataset.creatorFilter); return; }
+      const followButton = event.target.closest("[data-follow-member]");
+      if (followButton) { toggleMemberFollow(followButton.dataset.followMember); return; }
       const favoriteButton = event.target.closest("[data-detail-favorite]");
       if (favoriteButton) { toggleFavorite(favoriteButton.dataset.detailFavorite); openDetail(favoriteButton.dataset.detailFavorite); return; }
       const likeButton = event.target.closest("[data-detail-like]");
