@@ -184,15 +184,24 @@
     const panel = $("#adminStats");
     if (!panel || !supabase || !currentUser) return;
     try {
-      const { data, error, count } = await supabase.from(TABLE)
-        .select("id,title,view_count", { count: "exact" })
-        .order("view_count", { ascending: false }).limit(1000);
-      if (error) throw error;
-      const rows = data || [];
+      const rows = [];
+      const pageSize = 500;
+      let offset = 0;
+      while (true) {
+        const { data, error } = await supabase.from(TABLE)
+          .select("id,title,view_count")
+          .order("view_count", { ascending: false })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        const page = data || [];
+        rows.push(...page);
+        if (page.length < pageSize) break;
+        offset += pageSize;
+      }
       const totalViews = rows.reduce((sum, row) => sum + Number(row.view_count || 0), 0);
       const top = rows.filter(row => Number(row.view_count || 0) > 0).slice(0, 3);
       panel.innerHTML = `<div class="admin-stat-grid">
-        <div><strong>${Number(count || 0).toLocaleString("id-ID")}</strong><span>Total karya</span></div>
+        <div><strong>${rows.length.toLocaleString("id-ID")}</strong><span>Total karya</span></div>
         <div><strong>${totalViews.toLocaleString("id-ID")}</strong><span>Total dilihat</span></div>
       </div><div class="admin-stat-top"><b>Karya paling sering dilihat</b>${top.length
         ? `<ol>${top.map(row => `<li>${escapeHtml(row.title)} <span>${Number(row.view_count || 0).toLocaleString("id-ID")}×</span></li>`).join("")}</ol>`
