@@ -7,6 +7,7 @@
   <meta name="description" content="KOMSI RUPA LIBRARY — ruang arsip, referensi, dan eksplorasi visual.">
   <title>KOMSI RUPA LIBRARY</title>
   <link rel="stylesheet" href="style.css?v=20261115-secure-profile-visit1">
+  <link rel="stylesheet" href="ui-refresh.css?v=20261115-ui1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     if (!window.supabase) {
@@ -86,7 +87,6 @@
         <button class="category-chip" type="button" data-category="Ilustrasi" aria-pressed="false">Ilustrasi</button>
         <button class="category-chip" type="button" data-category="Fotografi" aria-pressed="false">Fotografi</button>
         <button class="category-chip" type="button" data-category="Artwork" aria-pressed="false">Artwork</button>
-        <button class="category-chip" type="button" data-category="Video" aria-pressed="false">Video</button>
       </div>
       <div class="creator-filter" id="creatorFilter" hidden><span id="creatorFilterLabel"></span><button type="button" id="clearCreatorFilter">Tampilkan semua kreator</button></div>
 
@@ -168,7 +168,6 @@
           <option value="Ilustrasi">Ilustrasi</option>
           <option value="Fotografi">Fotografi</option>
           <option value="Artwork">Artwork</option>
-          <option value="Video">Video</option>
         </select>
         <label for="artCreator">Creator / Nama Kreator</label>
         <input id="artCreator" name="creator" type="text" placeholder="Masukkan nama kreator" required>
