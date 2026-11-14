@@ -289,6 +289,7 @@
   function notificationLabel(item, actorName) {
     const actor = actorName || "Anggota KOMSI";
     if (item.notification_type === "like") return actor + " menyukai karya kamu.";
+    if (item.notification_type === "reply") return actor + " membalas komentar kamu.";
     if (item.notification_type === "comment") return actor + " mengomentari karya kamu.";
     return actor + " mulai mengikuti kamu.";
   }
@@ -399,39 +400,57 @@
     panel.innerHTML = '<p class="dashboard-empty">Memuat komentar…</p>';
     try {
       const result = await supabase.from("artwork_comments")
-        .select("id,body,user_id,created_at")
-        .eq("artwork_id", Number(id)).order("created_at", { ascending: true }).limit(100);
+        .select("id,body,user_id,parent_comment_id,created_at")
+        .eq("artwork_id", Number(id)).order("created_at", { ascending: true }).limit(200);
       if (result.error) throw result.error;
-      panel.innerHTML = (result.data || []).map(row => {
-        const name = "Anggota KOMSI";
+      const rows = result.data || [];
+      const userIds = [...new Set(rows.map(row => row.user_id).filter(Boolean))];
+      let names = new Map();
+      if (userIds.length) {
+        const profiles = await supabase.from("member_profiles").select("user_id,display_name").in("user_id", userIds);
+        if (!profiles.error) names = new Map((profiles.data || []).map(profile => [profile.user_id, profile.display_name || "Anggota KOMSI"]));
+      }
+      const replies = new Map();
+      rows.filter(row => row.parent_comment_id).forEach(row => {
+        const key = String(row.parent_comment_id);
+        if (!replies.has(key)) replies.set(key, []);
+        replies.get(key).push(row);
+      });
+      const renderOne = (row, isReply = false) => {
+        const name = names.get(row.user_id) || "Anggota KOMSI";
         const own = currentUser?.id === row.user_id;
-        return '<article class="art-comment"><div><strong>' + escapeHtml(name) + '</strong><p>' + escapeHtml(row.body) + '</p><time>' + escapeHtml(prettyDate(row.created_at)) + '</time></div>' + (own ? '<button type="button" class="text-button" data-delete-comment="' + row.id + '">Hapus</button>' : '') + '</article>';
-      }).join("") || '<p class="dashboard-empty">Belum ada komentar. Jadilah yang pertama.</p>';
+        return '<article class="art-comment ' + (isReply ? 'art-comment-reply' : '') + '"><div class="art-comment-content"><strong>' + escapeHtml(name) + '</strong><p>' + escapeHtml(row.body) + '</p><time>' + escapeHtml(prettyDate(row.created_at)) + '</time>' +
+          (!isReply && currentUser ? '<button type="button" class="text-button" data-reply-toggle="' + row.id + '">Balas</button>' : '') +
+          (own ? '<button type="button" class="text-button" data-delete-comment="' + row.id + '">Hapus</button>' : '') +
+          (!isReply && currentUser ? '<form class="art-reply-form" data-reply-form="' + row.id + '" data-reply-artwork="' + Number(id) + '" hidden><textarea rows="2" maxlength="1000" placeholder="Tulis balasan..."></textarea><button type="submit">Kirim balasan</button></form>' : '') +
+          '</div></article>';
+      };
+      panel.innerHTML = rows.filter(row => !row.parent_comment_id).map(row =>
+        renderOne(row) + (replies.get(String(row.id)) || []).map(reply => renderOne(reply, true)).join("")
+      ).join("") || '<p class="dashboard-empty">Belum ada komentar. Jadilah yang pertama.</p>';
     } catch (error) { panel.textContent = "Komentar gagal dimuat: " + getErrorMessage(error); }
   }
 
   async function submitArtworkComment(event) {
     event.preventDefault();
     if (!currentUser) { alert("Masuk untuk berkomentar."); return; }
-    // Form ini diproses melalui event delegation pada #detailContent,
-    // sehingga event.currentTarget adalah container, bukan elemen form.
-    const form = event.target?.closest?.("#detailCommentForm");
-    const rawId = form?.dataset?.commentArtwork;
+    const form = event.target?.closest?.("#detailCommentForm, [data-reply-form]");
+    const isReply = Boolean(form?.matches?.("[data-reply-form]"));
+    const rawId = isReply ? form?.dataset?.replyArtwork : form?.dataset?.commentArtwork;
     const id = Number(rawId);
+    const parentId = isReply ? Number(form?.dataset?.replyForm) : null;
     const input = form?.querySelector("textarea");
     const body = input?.value?.trim();
-    if (!form || !rawId || !Number.isSafeInteger(id) || id <= 0) {
-      showDeleteMessage("Komentar tidak dapat dikirim karena ID karya tidak terbaca. Tutup detail karya lalu buka kembali.");
-      console.error("ID karya untuk komentar tidak valid:", { rawId, form });
+    if (!form || !rawId || !Number.isSafeInteger(id) || id <= 0 ||
+        (isReply && (!Number.isSafeInteger(parentId) || parentId <= 0))) {
+      showDeleteMessage("Komentar tidak dapat dikirim karena ID karya atau komentar tidak terbaca. Buka kembali detail karya.");
       return;
     }
     if (!body) return;
-    const { error } = await supabase.from("artwork_comments").insert({
-      artwork_id: id,
-      user_id: currentUser.id,
-      body
-    });
-    if (error) { showDeleteMessage("Komentar gagal dikirim: " + getErrorMessage(error)); return; }
+    const payload = { artwork_id: id, user_id: currentUser.id, body };
+    if (isReply) payload.parent_comment_id = parentId;
+    const { error } = await supabase.from("artwork_comments").insert(payload);
+    if (error) { showDeleteMessage((isReply ? "Balasan" : "Komentar") + " gagal dikirim: " + getErrorMessage(error)); return; }
     artworkCommentCounts.set(String(id), Number(artworkCommentCounts.get(String(id)) || 0) + 1);
     input.value = "";
     await loadArtworkComments(id);
@@ -1180,6 +1199,12 @@
       if (favoriteButton) { toggleFavorite(favoriteButton.dataset.detailFavorite); openDetail(favoriteButton.dataset.detailFavorite); return; }
       const likeButton = event.target.closest("[data-detail-like]");
       if (likeButton) { toggleArtworkLike(likeButton.dataset.detailLike); return; }
+      const replyToggle = event.target.closest("[data-reply-toggle]");
+      if (replyToggle) {
+        const replyForm = $("#artworkComments")?.querySelector('[data-reply-form="' + replyToggle.dataset.replyToggle + '"]');
+        if (replyForm) { replyForm.hidden = !replyForm.hidden; if (!replyForm.hidden) replyForm.querySelector("textarea")?.focus(); }
+        return;
+      }
       const deleteCommentButton = event.target.closest("[data-delete-comment]");
       if (deleteCommentButton) { deleteArtworkComment(deleteCommentButton.dataset.deleteComment); return; }
       const editButton = event.target.closest("[data-edit-artwork]");
@@ -1194,7 +1219,7 @@
     $("#showSignup")?.addEventListener("click", () => { $("#loginForm").hidden = true; $("#signupForm").hidden = false; });
     $("#showLogin")?.addEventListener("click", () => { $("#signupForm").hidden = true; $("#loginForm").hidden = false; });
     $("#uploadForm")?.addEventListener("submit", uploadArtwork);
-    $("#detailContent")?.addEventListener("submit", event => { if (event.target.matches("#detailCommentForm")) submitArtworkComment(event); });
+    $("#detailContent")?.addEventListener("submit", event => { if (event.target.matches("#detailCommentForm, [data-reply-form]")) submitArtworkComment(event); });
     $("#profileForm")?.addEventListener("submit", saveMemberProfile);
     $("#profileAvatarFile")?.addEventListener("change", (event) => {
       const file = event.target.files?.[0];
